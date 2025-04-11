@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VSCode
+.vscode/
+
+# 临时文件
+temp.xlsx
+*.tmp
+*.bak
+*.swp
+
+# 环境配置
+.env
+.venv
+env/
+venv/
+ENV/
+
+# 临时数据文件
+*.csv
+*.xlsx
+*.xls 
