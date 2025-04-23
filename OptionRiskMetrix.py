@@ -6,6 +6,7 @@ import dataframe_image as dfi
 from pathlib import Path
 import json
 import datetime as dt
+from datetime import datetime
 
 # from WindPy import w
 # w.start()
@@ -43,6 +44,18 @@ def findOptionPrice(date):
     WHERE trading_date = '{date}'
     """
     df = pd.read_sql(sql=SQL_cmd, con=CCF.std_market_data)
+    df["underlying_instr_id"] = df["underlying_instr_id"].apply(
+        lambda x: (
+            "IH" + x[2:]
+            if x.startswith("HO")
+            else (
+                "IF" + x[2:]
+                if x.startswith("IO")
+                else ("IM" + x[2:] if x.startswith("MO") else x)
+            )
+        )
+    )
+
     datebar = date[:4] + "-" + date[4:6] + "-" + date[6:]
     SQL_cmd = f"""SELECT instrument_id, trading_date, close
     FROM daily_data
@@ -84,6 +97,7 @@ def findOptionPrice(date):
             multi = info_dict[underlying_id]["volume_multiple"]
             tick = info_dict[underlying_id]["price_tick"]
             sector = info_dict[underlying_id]["sector"]
+            updownlimit = info_dict[underlying_id]["updownlimit"]
 
             ttm = len(
                 CCF.tradingDay[(CCF.tradingDay > date) & (CCF.tradingDay <= expiredate)]
@@ -92,11 +106,16 @@ def findOptionPrice(date):
             df.at[index, "sector"] = sector
             df.at[index, "opt_typ"] = type_
             df.at[index, "strike"] = k
-            df.at[index, "dtm"] = ttm
+            df.at[index, "tdtm"] = ttm
+            df.at[index, "cdtm"] = (
+                datetime.strptime(expiredate, "%Y%m%d")
+                - datetime.strptime(date, "%Y%m%d")
+            ).days
             df.at[index, "commission"] = commission
             df.at[index, "multiplier"] = multi
             df.at[index, "tick"] = tick
             df.at[index, "expiredate"] = expiredate
+            df.at[index, "updownlimit"] = updownlimit
             df.at[index, "windcode"] = row["instrument_id"].upper() + "." + exchange
             iv = CCF.IV(
                 row["option_close"], row["underlying_close"], k, ttm / 243, 0, type_
@@ -121,8 +140,8 @@ def findOptionPrice(date):
             invalid_rows.append(index)
             error_set.append((index, row["instrument_id"], ValueError))
     df = df.drop(invalid_rows).dropna().reset_index(drop=True)
-    df[["volume", "open_interest", "dtm", "multiplier"]] = df[
-        ["volume", "open_interest", "dtm", "multiplier"]
+    df[["volume", "open_interest", "tdtm", "cdtm", "multiplier"]] = df[
+        ["volume", "open_interest", "tdtm", "cdtm", "multiplier"]
     ].astype(int)
 
     return df
@@ -162,6 +181,17 @@ def parse_option_contract(contract):
         type_ = contract[type_index]
         k = float(contract[type_index + 1 :])
 
+    # 修改 underlying_id
+    if underlying_id.startswith("HO"):
+        underlying_id = "IH" + underlying_id[2:]
+        product = "IH"
+    elif underlying_id.startswith("IO"):
+        underlying_id = "IF" + underlying_id[2:]
+        product = "IF"
+    elif underlying_id.startswith("MO"):
+        underlying_id = "IM" + underlying_id[2:]
+        product = "IM"
+
     return product, underlying_id, type_.lower(), k
 
 
@@ -176,9 +206,22 @@ def findUnderlyingOptionInfo(date):
     max_open_interest = (
         max_open_interest.groupby("underlying_instr_id").first().reset_index()
     )
+    max_open_interest["underlying_instr_id"] = max_open_interest[
+        "underlying_instr_id"
+    ].apply(
+        lambda x: (
+            "IH" + x[2:]
+            if x.startswith("HO")
+            else (
+                "IF" + x[2:]
+                if x.startswith("IO")
+                else ("IM" + x[2:] if x.startswith("MO") else x)
+            )
+        )
+    )
     SQL_cmd = f"""
     SELECT         
-    i.underlying_instr_id,
+        i.underlying_instr_id,
         i.exchange_id,
         i.expiredate,
         i.volume_multiple,
@@ -189,6 +232,24 @@ def findUnderlyingOptionInfo(date):
     WHERE i.instrument_id IN {tuple(max_open_interest['instrument_id'])}
     """
     instrument_info = pd.read_sql(sql=SQL_cmd, con=CCF.market_base)
+    instrument_info["underlying_instr_id"] = instrument_info[
+        "underlying_instr_id"
+    ].apply(
+        lambda x: (
+            "IH" + x[2:]
+            if x.startswith("HO")
+            else (
+                "IF" + x[2:]
+                if x.startswith("IO")
+                else ("IM" + x[2:] if x.startswith("MO") else x)
+            )
+        )
+    )
+    instrument_info["open_money_by_vol"] = np.where(
+        instrument_info["underlying_instr_id"].str.startswith(("IH", "IF", "IM")),
+        15,
+        instrument_info["open_money_by_vol"],
+    )
     SQL_cmd = f"""
     SELECT instrument_id as underlying_instr_id, short_margin_ratio as margin_ratio, product_id as product
     FROM instrument
@@ -201,11 +262,31 @@ def findUnderlyingOptionInfo(date):
     WHERE PRODUCT_ID IN {tuple(margin_ratio['product'])}
     """
     secinfo = pd.read_sql(sql=SQL_cmd, con=CCF.research)
+    secinfo.loc[len(secinfo)] = ["IH", "金融"]
+    secinfo.loc[len(secinfo)] = ["IF", "金融"]
+    secinfo.loc[len(secinfo)] = ["IC", "金融"]
+    secinfo.loc[len(secinfo)] = ["IM", "金融"]
+    SQL_cmd = f"""
+    SELECT         
+    instrument_id,
+    prev_settlement,
+    limit_up
+    FROM daily_data
+    WHERE trading_date = '{date[:4]}-{date[4:6]}-{date[6:]}'
+    """
+    limitupdf = pd.read_sql(sql=SQL_cmd, con=CCF.std_market_data)
+    limitupdf["updownlimit"] = (
+        limitupdf["limit_up"] / limitupdf["prev_settlement"] - 1
+    ).round(2)
+    limitupdf = limitupdf[["instrument_id", "updownlimit"]]
+    limitupdf = limitupdf.rename(columns={"instrument_id": "underlying_instr_id"})
+
     merged_df = pd.merge(
-        max_open_interest, instrument_info, on="underlying_instr_id", how="outer"
+        max_open_interest, instrument_info, on="underlying_instr_id", how="left"
     )
-    merged_df = pd.merge(merged_df, margin_ratio, on="underlying_instr_id", how="outer")
-    merged_df = pd.merge(merged_df, secinfo, on="product", how="outer")
+    merged_df = pd.merge(merged_df, margin_ratio, on="underlying_instr_id", how="left")
+    merged_df = pd.merge(merged_df, limitupdf, on="underlying_instr_id", how="left")
+    merged_df = pd.merge(merged_df, secinfo, on="product", how="left")
     merged_df = merged_df.drop(columns=["instrument_id"]).dropna()
     merged_dict = merged_df.set_index("underlying_instr_id").T.to_dict("dict")
     for key in merged_dict:
@@ -232,7 +313,7 @@ def getPayoffSeries(product, dtm, underlying_close, strike, opt_typ):
 
 if __name__ == "__main__":
     date = (dt.date.today()).strftime(format="%Y%m%d")
-    # date = "20250410"
+    # date = "20250421"
     # 读取期权价格数据
     optdf = findOptionPrice(date)
     # 设置期权价格数据的索引
@@ -246,7 +327,7 @@ if __name__ == "__main__":
     def calculate_payoff(row):
         ins_id = row["instrument_id"]
         product = row["product"]
-        dtm = row["dtm"]
+        dtm = row["tdtm"]
         underlying_close = row["underlying_close"]
         strike = row["strike"]
         opt_typ = row["opt_typ"]
@@ -259,6 +340,13 @@ if __name__ == "__main__":
             [payoff.mean(), payoff.quantile(0.95), payoff.max(), len(payoff)]
         )
 
+    optdf["NumLimit"] = (
+        np.abs(np.log(optdf["strike"] / optdf["underlying_close"]))
+        / optdf["updownlimit"]
+    ).round(2)
+    optdf["TradingValue"] = (
+        optdf["option_close"] * optdf["multiplier"] * optdf["volume"]
+    )
     optdf[["ExpectedPayoff", "Q95Payoff", "MaxPayoff", "DaysInSample"]] = optdf.apply(
         calculate_payoff, axis=1
     )
@@ -267,21 +355,57 @@ if __name__ == "__main__":
     # 计算期权的预期承保费
     optdf["ExpectedLotPremium"] = optdf["CreditCollected"] - optdf["ExpectedPayoff"]
     # 计算期权的理想收益
-    optdf["IdealRet"] = (
+    optdf["IdealRet(C)"] = (
+        (optdf["CreditCollected"] - optdf["commission"])
+        / optdf["margin"]
+        * 365
+        / optdf["cdtm"]
+    )
+    # 计算期权的预期边际收益
+    optdf["EMarginRet(C)"] = (
+        (optdf["ExpectedLotPremium"] - optdf["commission"] * 2)
+        / optdf["margin"]
+        * 365
+        / optdf["cdtm"]
+    )
+    # 计算期权的95%边际收益
+    optdf["95MarginRet(C)"] = (
+        (
+            optdf["option_close"] * optdf["multiplier"]
+            - optdf["Q95Payoff"]
+            - optdf["commission"] * 2
+        )
+        / optdf["margin"]
+        * 365
+        / optdf["cdtm"]
+    )
+    # 计算期权的最差边际收益
+    optdf["WorstMarginRet(C)"] = (
+        (
+            optdf["option_close"] * optdf["multiplier"]
+            - optdf["MaxPayoff"]
+            - optdf["commission"] * 2
+        )
+        / optdf["margin"]
+        * 365
+        / optdf["cdtm"]
+    )
+
+    optdf["IdealRet(T)"] = (
         (optdf["CreditCollected"] - optdf["commission"])
         / optdf["margin"]
         * 243
-        / optdf["dtm"]
+        / optdf["tdtm"]
     )
     # 计算期权的预期边际收益
-    optdf["EMarginRet"] = (
+    optdf["EMarginRet(T)"] = (
         (optdf["ExpectedLotPremium"] - optdf["commission"] * 2)
         / optdf["margin"]
         * 243
-        / optdf["dtm"]
+        / optdf["tdtm"]
     )
     # 计算期权的95%边际收益
-    optdf["95MarginRet"] = (
+    optdf["95MarginRet(T)"] = (
         (
             optdf["option_close"] * optdf["multiplier"]
             - optdf["Q95Payoff"]
@@ -289,10 +413,10 @@ if __name__ == "__main__":
         )
         / optdf["margin"]
         * 243
-        / optdf["dtm"]
+        / optdf["tdtm"]
     )
     # 计算期权的最差边际收益
-    optdf["WorstMarginRet"] = (
+    optdf["WorstMarginRet(T)"] = (
         (
             optdf["option_close"] * optdf["multiplier"]
             - optdf["MaxPayoff"]
@@ -300,24 +424,36 @@ if __name__ == "__main__":
         )
         / optdf["margin"]
         * 243
-        / optdf["dtm"]
+        / optdf["tdtm"]
     )
+
     # 删除空值
     optdf = optdf.dropna()
 
-    # 复制一份期权数据
+    # 复制一份期权数据，为筛选后结果
     std_df = optdf.copy()
     # 筛选出预期边际收益大于等于0.05的数据
-    std_df = std_df[std_df["EMarginRet"] >= 0.05]
+    std_df = std_df[std_df["EMarginRet(C)"] >= 0.05]
     # 筛选出delta绝对值小于0.1的数据
     std_df = std_df[np.abs(std_df["delta"]) < 0.1]
     # 筛选出dtm小于等于20的数据
-    std_df = std_df[std_df["dtm"] <= 20]
+    std_df = std_df[std_df["tdtm"] <= 35]
     # 筛选出持仓量大于等于200的数据
     std_df = std_df[std_df["open_interest"] >= 200]
     # 筛选出最大收益为0且样本天数大于等于500的数据
     std_df = std_df[(std_df["MaxPayoff"] == 0) & (std_df["DaysInSample"] >= 500)]
 
+    #  输入为一行optdf，输出该行在该交易日14:55时间点的ask和bid
+    def findOptionQuote(row):
+        date = row["trading_date"]
+        ins = row["instrument_id"]
+        try:
+            row = CCF.Option_Raw_Data(ins, date).iloc[-601]
+            return float(row["Ask1"]), float(row["Bid1"])
+        except:
+            return np.nan, np.nan
+
+    std_df["bid"] = std_df.apply(lambda x: findOptionQuote(x)[1], axis=1)
     # 生成excel数据
     exceldf = std_df[
         [
@@ -325,16 +461,21 @@ if __name__ == "__main__":
             "product",
             "option_close",
             "sector",
-            "option_close",
-            "EMarginRet",
+            "NumLimit",
+            "EMarginRet(C)",
+            "EMarginRet(T)",
             "margin",
-            "dtm",
+            "tdtm",
+            "cdtm",
+            "bid",
         ]
-    ].reset_index()
-    exceldf["EMarginRet"] = (exceldf["EMarginRet"] * 100).round(2)
+    ].dropna()
+    exceldf = exceldf[exceldf["bid"] > 0].reset_index()
+    exceldf["EMarginRet(C)"] = (exceldf["EMarginRet(C)"] * 100).round(2)
+    exceldf["EMarginRet(T)"] = (exceldf["EMarginRet(T)"] * 100).round(2)
     undrownum = exceldf.groupby("underlying_instr_id").size()
     undmeanret = (
-        exceldf.groupby("underlying_instr_id")["EMarginRet"]
+        exceldf.groupby("underlying_instr_id")["EMarginRet(T)"]
         .mean()
         .sort_values(ascending=False)
     )
@@ -373,7 +514,7 @@ if __name__ == "__main__":
         rowjs["risk_params"] = {
             "limit_price": row["option_close"] * -1,
             "ExpectedPayoff": row["ExpectedPayoff"],
-            "EMarginRet": row["EMarginRet"],
+            "EMarginRet": row["EMarginRet(T)"],
         }
         jsonoutput.append(rowjs)
 

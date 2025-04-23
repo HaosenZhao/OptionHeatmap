@@ -42,4 +42,4 @@ ENV/
 # 临时数据文件
 *.csv
 *.xlsx
-*.xls 
+*.xls
