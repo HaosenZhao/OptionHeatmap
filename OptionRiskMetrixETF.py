@@ -64,7 +64,7 @@ def findOptionPrice(date):
     """
     info = pd.read_sql(sql=SQL_cmd, con=CCF.market_base)
     info["sector"] = "ETF"
-    info["commission"] = 1.7 / 2
+    info["commission"] = 0
     info["updownlimit"] = 0.1
     df = pd.merge(df_merged, info, on="instrument_id", how="left")
     invalid_rows = []
@@ -92,17 +92,17 @@ def findOptionPrice(date):
             exchange = "SZ" if row["exchange_id"] == "SZSE" else "SH"
             df.at[index, "windcode"] = row["instrument_id"] + "." + exchange
             if underlying_id == "510300":
-                con_undcode = "沪深300"
+                con_undcode = "(华)沪深300"
             elif underlying_id == "510500":
-                con_undcode = "中证500"
+                con_undcode = "(南)中证500"
             elif underlying_id == "510050":
-                con_undcode = "上证50"
+                con_undcode = "(华)上证50"
             elif underlying_id == "159915":
-                con_undcode = "创业板"
+                con_undcode = "(易)创业板"
             elif underlying_id == "588000":
-                con_undcode = "科创50"
+                con_undcode = "(华)科创50"
             elif underlying_id == "159901":
-                con_undcode = "深证100"
+                con_undcode = "(易)深证100"
             conepire = expiredate[2:6]
             df.at[index, "ezCode"] = f"{con_undcode}_{conepire}_{k}{type_}"
             iv = CCF.IV(row["option_close"], und_close, k, ttm / 243, 0, type_)
@@ -182,15 +182,15 @@ def ETF_Option_Raw_Data(wind_code: str, tradingdate: str):
     return OptionData
 
 
-if __name__ == "__main__":
-    date = (dt.date.today()).strftime(format="%Y%m%d")
-    date = "20250418"
+def main(date):
+    # date = (dt.date.today()).strftime(format="%Y%m%d")
+    # date = "20250418"
     # 读取期权价格数据
     optdf = findOptionPrice(date)
     # 设置期权价格数据的索引
     optdf.index = optdf["ezCode"]
     # 调整保证金
-    optdf["margin"] = optdf["margin"] * 1.1
+    optdf["margin"] = optdf["margin"] * 1.2
     optdf["margin"] = optdf["margin"].round(0)
     # 计算期权的收益
     payoffmap = {}
@@ -234,29 +234,18 @@ if __name__ == "__main__":
     )
     # 计算期权的预期边际收益
     optdf["EMarginRet(C)"] = (
-        (optdf["ExpectedLotPremium"] - optdf["commission"] * 2)
-        / optdf["margin"]
-        * 365
-        / optdf["cdtm"]
+        (optdf["ExpectedLotPremium"] - 1.7) / optdf["margin"] * 365 / optdf["cdtm"]
     )
     # 计算期权的95%边际收益
     optdf["95MarginRet(C)"] = (
-        (
-            optdf["option_close"] * optdf["multiplier"]
-            - optdf["Q95Payoff"]
-            - optdf["commission"] * 2
-        )
+        (optdf["option_close"] * optdf["multiplier"] - optdf["Q95Payoff"] - 1.7)
         / optdf["margin"]
         * 365
         / optdf["cdtm"]
     )
     # 计算期权的最差边际收益
     optdf["WorstMarginRet(C)"] = (
-        (
-            optdf["option_close"] * optdf["multiplier"]
-            - optdf["MaxPayoff"]
-            - optdf["commission"] * 2
-        )
+        (optdf["option_close"] * optdf["multiplier"] - optdf["MaxPayoff"] - 1.7)
         / optdf["margin"]
         * 365
         / optdf["cdtm"]
@@ -270,29 +259,18 @@ if __name__ == "__main__":
     )
     # 计算期权的预期边际收益
     optdf["EMarginRet(T)"] = (
-        (optdf["ExpectedLotPremium"] - optdf["commission"] * 2)
-        / optdf["margin"]
-        * 243
-        / optdf["tdtm"]
+        (optdf["ExpectedLotPremium"] - 1.7) / optdf["margin"] * 243 / optdf["tdtm"]
     )
     # 计算期权的95%边际收益
     optdf["95MarginRet(T)"] = (
-        (
-            optdf["option_close"] * optdf["multiplier"]
-            - optdf["Q95Payoff"]
-            - optdf["commission"] * 2
-        )
+        (optdf["option_close"] * optdf["multiplier"] - optdf["Q95Payoff"] - 1.7)
         / optdf["margin"]
         * 243
         / optdf["tdtm"]
     )
     # 计算期权的最差边际收益
     optdf["WorstMarginRet(T)"] = (
-        (
-            optdf["option_close"] * optdf["multiplier"]
-            - optdf["MaxPayoff"]
-            - optdf["commission"] * 2
-        )
+        (optdf["option_close"] * optdf["multiplier"] - optdf["MaxPayoff"] - 1.7)
         / optdf["margin"]
         * 243
         / optdf["tdtm"]
@@ -329,9 +307,10 @@ if __name__ == "__main__":
     exceldf = std_df[
         [
             "instrument_id",
+            "expiredate",
+            "opt_typ",
             "underlying_instr_id",
             "option_close",
-            "sector",
             "NumLimit",
             "EMarginRet(C)",
             "EMarginRet(T)",
@@ -350,7 +329,9 @@ if __name__ == "__main__":
         .mean()
         .sort_values(ascending=False)
     )
-    exceldf = exceldf.groupby(["underlying_instr_id", "instrument_id"]).first()
+    exceldf = exceldf.groupby(
+        ["underlying_instr_id", "expiredate", "opt_typ", "instrument_id"]
+    ).first()
     result = []
     cnt = 0
     sett = []
@@ -409,3 +390,6 @@ if __name__ == "__main__":
             chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
             max_rows=-1,
         )
+
+
+# main("20250424")

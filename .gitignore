@@ -43,3 +43,7 @@ ENV/
 *.csv
 *.xlsx
 *.xls
+
+# tempfile
+temp/
+

@@ -5,6 +5,7 @@ import datetime as dt
 import seaborn as sns
 from flask import Flask, render_template_string, request
 from jinja2 import Template
+
 # from WindPy import w
 # w.start()
 
@@ -13,9 +14,9 @@ infodict = {}
 
 
 def findInsInfo(code):
-    if (code in infodict):
+    if code in infodict:
         return infodict[code]
-    SQL_cmd = f'''SELECT 
+    SQL_cmd = f"""SELECT 
         i.exchange_id,
         i.expiredate,
         i.volume_multiple,
@@ -30,78 +31,104 @@ def findInsInfo(code):
     WHERE 
         i.underlying_instr_id = '{code}'
     LIMIT 1
-        '''
+        """
     info = pd.read_sql(sql=SQL_cmd, con=CCF.market_base)
     info = info.fillna(0)
-    info = info.to_dict('records')[0]
-    if (info['exchange_id'] == 'CFFEX'):
-        info['exchange_id'] = 'CFE'
-    elif (info['exchange_id'] == 'SHFE'):
-        info['exchange_id'] = 'SHF'
-    elif (info['exchange_id'] == 'CZCE'):
-        info['exchange_id'] = 'CZC'
-    elif (info['exchange_id'] == 'GFEX'):
-        info['exchange_id'] = 'GFE'
+    info = info.to_dict("records")[0]
+    if info["exchange_id"] == "CFFEX":
+        info["exchange_id"] = "CFE"
+    elif info["exchange_id"] == "SHFE":
+        info["exchange_id"] = "SHF"
+    elif info["exchange_id"] == "CZCE":
+        info["exchange_id"] = "CZC"
+    elif info["exchange_id"] == "GFEX":
+        info["exchange_id"] = "GFE"
 
-    SQL_cmd = f'''SELECT 
+    SQL_cmd = f"""SELECT 
         long_margin_ratio
     FROM 
         instrument 
     WHERE 
         instrument_id = '{code}'
-        '''
+        """
     info2 = pd.read_sql(sql=SQL_cmd, con=CCF.market_base)
-    info2 = info2.to_dict('records')[0]
-    info['margin_ratio'] = info2['long_margin_ratio']
+    info2 = info2.to_dict("records")[0]
+    info["margin_ratio"] = info2["long_margin_ratio"]
     infodict[code] = info
     return info
 
 
 def findPortfolioDetails(future_id, portfolio, s, ttm, iv):
-    t = ttm/243
+    t = ttm / 243
     info = findInsInfo(future_id)
     portfolio_price = 0
     delta = 0
     gamma = 0
-    vega=  0
+    vega = 0
     theta = 0
     margin = 0
     for opt_code in portfolio:
         k = float(opt_code[:-1])
         typ = opt_code[-1]
         num_hold = portfolio[opt_code]
-        optprice = CCF.BSMiv.black_scholes_merton(typ, s, k, t, 0, iv, 0) * info['volume_multiple'] * num_hold
+        optprice = (
+            CCF.BSMiv.black_scholes_merton(typ, s, k, t, 0, iv, 0)
+            * info["volume_multiple"]
+            * num_hold
+        )
         portfolio_price += optprice
-        delta += CCF.BSMgreeks.delta(typ, s, k, t, 0, iv, 0) * info['volume_multiple'] * num_hold
-        gamma += CCF.BSMgreeks.gamma(typ, s, k, t, 0, iv, 0) * info['volume_multiple'] * num_hold
-        vega += CCF.BSMgreeks.vega(typ, s, k, t, 0, iv, 0) * info['volume_multiple'] * num_hold
-        theta += CCF.BSMgreeks.theta(typ, s, k, t, 0, iv, 0) * info['volume_multiple'] * num_hold
-        if(num_hold < 0):
-            margin -= s * num_hold * info['margin_ratio'] * info['volume_multiple'] / 2 + optprice
-    return [portfolio_price,delta,gamma,vega,theta,margin]
+        delta += (
+            CCF.BSMgreeks.delta(typ, s, k, t, 0, iv, 0)
+            * info["volume_multiple"]
+            * num_hold
+        )
+        gamma += (
+            CCF.BSMgreeks.gamma(typ, s, k, t, 0, iv, 0)
+            * info["volume_multiple"]
+            * num_hold
+        )
+        vega += (
+            CCF.BSMgreeks.vega(typ, s, k, t, 0, iv, 0)
+            * info["volume_multiple"]
+            * num_hold
+        )
+        theta += (
+            CCF.BSMgreeks.theta(typ, s, k, t, 0, iv, 0)
+            * info["volume_multiple"]
+            * num_hold
+        )
+        if num_hold < 0:
+            margin -= (
+                s * num_hold * info["margin_ratio"] * info["volume_multiple"] / 2
+                + optprice
+            )
+    return [portfolio_price, delta, gamma, vega, theta, margin]
 
 
 def findPairScenrio(future_id, opt_typ, shortk, longk, n, iv):
-    portfolio = {f'{shortk}{opt_typ}': -1 * n, f'{longk}{opt_typ}': 1}
+    portfolio = {f"{shortk}{opt_typ}": -1 * n, f"{longk}{opt_typ}": 1}
     optinfo = findInsInfo(future_id)
-    today = dt.date.today().strftime(format='%Y%m%d')
-    maxttm = len(CCF.tradingDay[(CCF.tradingDay <= optinfo['expiredate'])
-                                & (CCF.tradingDay >= today)])
-    if (n == 1):
-        print('Long Gamma Strategy')
+    today = dt.date.today().strftime(format="%Y%m%d")
+    maxttm = len(
+        CCF.tradingDay[
+            (CCF.tradingDay <= optinfo["expiredate"]) & (CCF.tradingDay >= today)
+        ]
+    )
+    if n == 1:
+        print("Long Gamma Strategy")
     else:
-        if (opt_typ == 'c' and shortk > longk):
-            print('Short Gamma Strategy')
-        elif (opt_typ == 'p' and shortk < longk):
-            print('Short Gamma Strategy')
+        if opt_typ == "c" and shortk > longk:
+            print("Short Gamma Strategy")
+        elif opt_typ == "p" and shortk < longk:
+            print("Short Gamma Strategy")
         else:
-            print('Long Gamma Strategy')
-    multi = optinfo['volume_multiple']
-    bidp = optinfo['price_tick']
+            print("Long Gamma Strategy")
+    multi = optinfo["volume_multiple"]
+    bidp = optinfo["price_tick"]
     askp = bidp * 2
-    commission = optinfo['open_money_by_vol']
-    exchange = optinfo['exchange_id']
-    margin_ratio = optinfo['margin_ratio'] / 2
+    commission = optinfo["open_money_by_vol"]
+    exchange = optinfo["exchange_id"]
+    margin_ratio = optinfo["margin_ratio"] / 2
     initport_price = (n + 1) * 2 * commission + (askp - bidp * n) * multi
     margin_prepared = shortk * multi * n * margin_ratio
 
@@ -109,7 +136,7 @@ def findPairScenrio(future_id, opt_typ, shortk, longk, n, iv):
     lows = min(shortk, longk) * 0.8
     index = np.round(np.linspace(lows, maxs, 30), 1)
     columns = list(range(1, maxttm + 1))
-    keys = ['portfolio_price', 'delta', 'gamma', 'vega', 'theta', 'margin']
+    keys = ["portfolio_price", "delta", "gamma", "vega", "theta", "margin"]
     dataframe_dict = {}
     for key in keys:
         df = pd.DataFrame(0, index=index, columns=columns)
@@ -117,17 +144,19 @@ def findPairScenrio(future_id, opt_typ, shortk, longk, n, iv):
     for s in index:
         for ttm in columns:
             portfolio_price, delta, gamma, vega, theta, margin = findPortfolioDetails(
-                future_id, portfolio, s, ttm, iv)
-            dataframe_dict['portfolio_price'].loc[s, ttm] = portfolio_price
-            dataframe_dict['delta'].loc[s, ttm] = delta
-            dataframe_dict['gamma'].loc[s, ttm] = gamma
-            dataframe_dict['vega'].loc[s, ttm] = vega
-            dataframe_dict['theta'].loc[s, ttm] = theta
-            dataframe_dict['margin'].loc[s, ttm] = margin
-    dataframe_dict['PNL'] = dataframe_dict['portfolio_price'] - initport_price
-    dataframe_dict['LotsDelta'] = dataframe_dict['delta'] / multi
-    dataframe_dict['AnnualRet'] = dataframe_dict[
-        'PNL'] / margin_prepared * 243 / maxttm * 100
+                future_id, portfolio, s, ttm, iv
+            )
+            dataframe_dict["portfolio_price"].loc[s, ttm] = portfolio_price
+            dataframe_dict["delta"].loc[s, ttm] = delta
+            dataframe_dict["gamma"].loc[s, ttm] = gamma
+            dataframe_dict["vega"].loc[s, ttm] = vega
+            dataframe_dict["theta"].loc[s, ttm] = theta
+            dataframe_dict["margin"].loc[s, ttm] = margin
+    dataframe_dict["PNL"] = dataframe_dict["portfolio_price"] - initport_price
+    dataframe_dict["LotsDelta"] = dataframe_dict["delta"] / multi
+    dataframe_dict["AnnualRet"] = (
+        dataframe_dict["PNL"] / margin_prepared * 243 / maxttm * 100
+    )
     for key in dataframe_dict:
         dataframe_dict[key] = np.round(dataframe_dict[key], 2)
     return dataframe_dict
@@ -135,7 +164,7 @@ def findPairScenrio(future_id, opt_typ, shortk, longk, n, iv):
 
 def transferToHTML(future_id, opt_typ, shortk, longk, n, iv):
     dataframe_dict = findPairScenrio(future_id, opt_typ, shortk, longk, n, iv)
-        # 创建一个空列表来存储每个 DataFrame 的样式化 HTML 内容
+    # 创建一个空列表来存储每个 DataFrame 的样式化 HTML 内容
     keys = list(dataframe_dict.keys())
     # 创建一个空列表来存储每个 DataFrame 的样式化 HTML 内容
     styled_dfs_html = []
@@ -221,13 +250,12 @@ def transferToHTML(future_id, opt_typ, shortk, longk, n, iv):
     filled_html = template.render(keys=keys, zipped_data=zipped_data)
 
     # 将生成的 HTML 保存到文件
-    with open('./combined_dataframes.html', 'w', encoding='utf-8') as f:
+    with open("./combined_dataframes.html", "w", encoding="utf-8") as f:
         f.write(filled_html)
     return 0
 
+
 ####################fdsadasdasdad##############################
-
-
 
 
 app = Flask(__name__)
@@ -343,10 +371,11 @@ html_template = """
 </html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def index():
-    future_id = 'FG505'
-    opt_typ = 'c'
+    future_id = "FG505"
+    opt_typ = "c"
     shortk = 1820
     longk = 1620
     n = 6
@@ -367,18 +396,19 @@ def index():
         n=n,
         iv=iv,
         keys=dataframe_dict.keys(),
-        zipped_data=zipped_data
+        zipped_data=zipped_data,
     )
     return filled_html
 
-@app.route('/update')
+
+@app.route("/update")
 def update():
-    future_id = request.args.get('future_id')
-    opt_typ = request.args.get('opt_typ')
-    shortk = int(request.args.get('shortk'))
-    longk = int(request.args.get('longk'))
-    n = int(request.args.get('n'))
-    iv = float(request.args.get('iv'))
+    future_id = request.args.get("future_id")
+    opt_typ = request.args.get("opt_typ")
+    shortk = int(request.args.get("shortk"))
+    longk = int(request.args.get("longk"))
+    n = int(request.args.get("n"))
+    iv = float(request.args.get("iv"))
     dataframe_dict = findPairScenrio(future_id, opt_typ, shortk, longk, n, iv)
     styled_dfs_html = []
     for key, df in dataframe_dict.items():
@@ -395,9 +425,10 @@ def update():
         n=n,
         iv=iv,
         keys=dataframe_dict.keys(),
-        zipped_data=zipped_data
+        zipped_data=zipped_data,
     )
     return filled_html
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)

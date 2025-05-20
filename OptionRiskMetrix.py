@@ -8,8 +8,8 @@ import json
 import datetime as dt
 from datetime import datetime
 
-# from WindPy import w
-# w.start()
+##### 注： shares delta for IC IM need to updated
+
 
 retMap = {}
 
@@ -311,15 +311,13 @@ def getPayoffSeries(product, dtm, underlying_close, strike, opt_typ):
     return payoffser
 
 
-if __name__ == "__main__":
-    date = (dt.date.today()).strftime(format="%Y%m%d")
-    # date = "20250421"
+def main(date):
     # 读取期权价格数据
     optdf = findOptionPrice(date)
     # 设置期权价格数据的索引
     optdf.index = optdf["instrument_id"]
     # 调整保证金
-    optdf["margin"] = optdf["margin"] * 1.1
+    optdf["margin"] = optdf["margin"] * 1.2
     optdf["margin"] = optdf["margin"].round(0)
     # 计算期权的收益
     payoffmap = {}
@@ -337,7 +335,13 @@ if __name__ == "__main__":
         )
         payoffmap[ins_id] = payoff
         return pd.Series(
-            [payoff.mean(), payoff.quantile(0.95), payoff.max(), len(payoff)]
+            [
+                payoff.mean(),
+                payoff.quantile(0.95),
+                payoff.quantile(0.99),
+                payoff.max(),
+                len(payoff),
+            ]
         )
 
     optdf["NumLimit"] = (
@@ -347,8 +351,8 @@ if __name__ == "__main__":
     optdf["TradingValue"] = (
         optdf["option_close"] * optdf["multiplier"] * optdf["volume"]
     )
-    optdf[["ExpectedPayoff", "Q95Payoff", "MaxPayoff", "DaysInSample"]] = optdf.apply(
-        calculate_payoff, axis=1
+    optdf[["ExpectedPayoff", "Q95Payoff", "Q99Payoff", "MaxPayoff", "DaysInSample"]] = (
+        optdf.apply(calculate_payoff, axis=1)
     )
     # 计算期权的信用收取
     optdf["CreditCollected"] = optdf["option_close"] * optdf["multiplier"]
@@ -379,6 +383,18 @@ if __name__ == "__main__":
         * 365
         / optdf["cdtm"]
     )
+    # 计算期权的99%边际收益
+    optdf["99MarginRet(C)"] = (
+        (
+            optdf["option_close"] * optdf["multiplier"]
+            - optdf["Q99Payoff"]
+            - optdf["commission"] * 2
+        )
+        / optdf["margin"]
+        * 365
+        / optdf["cdtm"]
+    )
+
     # 计算期权的最差边际收益
     optdf["WorstMarginRet(C)"] = (
         (
@@ -415,6 +431,18 @@ if __name__ == "__main__":
         * 243
         / optdf["tdtm"]
     )
+    # 计算期权的99%边际收益
+    optdf["99MarginRet(T)"] = (
+        (
+            optdf["option_close"] * optdf["multiplier"]
+            - optdf["Q99Payoff"]
+            - optdf["commission"] * 2
+        )
+        / optdf["margin"]
+        * 243
+        / optdf["tdtm"]
+    )
+
     # 计算期权的最差边际收益
     optdf["WorstMarginRet(T)"] = (
         (
@@ -441,7 +469,8 @@ if __name__ == "__main__":
     # 筛选出持仓量大于等于200的数据
     std_df = std_df[std_df["open_interest"] >= 200]
     # 筛选出最大收益为0且样本天数大于等于500的数据
-    std_df = std_df[(std_df["MaxPayoff"] == 0) & (std_df["DaysInSample"] >= 500)]
+    # std_df = std_df[(std_df["MaxPayoff"] == 0) & (std_df["DaysInSample"] >= 500)]
+    std_df = std_df[(std_df["DaysInSample"] >= 500) & (std_df["Q99Payoff"] == 0)]
 
     #  输入为一行optdf，输出该行在该交易日14:55时间点的ask和bid
     def findOptionQuote(row):
@@ -465,6 +494,7 @@ if __name__ == "__main__":
             "EMarginRet(C)",
             "EMarginRet(T)",
             "margin",
+            "delta",
             "tdtm",
             "cdtm",
             "bid",
@@ -473,26 +503,36 @@ if __name__ == "__main__":
     exceldf = exceldf[exceldf["bid"] > 0].reset_index()
     exceldf["EMarginRet(C)"] = (exceldf["EMarginRet(C)"] * 100).round(2)
     exceldf["EMarginRet(T)"] = (exceldf["EMarginRet(T)"] * 100).round(2)
-    undrownum = exceldf.groupby("underlying_instr_id").size()
-    undmeanret = (
-        exceldf.groupby("underlying_instr_id")["EMarginRet(T)"]
-        .mean()
-        .sort_values(ascending=False)
+    exceldf["delta"] = (exceldf["delta"]).round(2)
+    # undrownum = exceldf.groupby("underlying_instr_id").size()
+    # undmeanret = (
+    #     exceldf.groupby("underlying_instr_id")["EMarginRet(T)"]
+    #     .mean()
+    #     .sort_values(ascending=False)
+    # )
+    result = {}
+    exceldf = (
+        exceldf.sort_values(by="delta", ascending=False)
+        .groupby(["sector", "cdtm", "underlying_instr_id", "instrument_id"])
+        .first()
     )
-    exceldf = exceldf.groupby(["underlying_instr_id", "instrument_id"]).first()
-    result = []
-    cnt = 0
-    sett = []
-    for und in undmeanret.index:
-        thisnum = undrownum[und]
-        if thisnum + cnt > 120:
-            result.append(exceldf.loc[(sett, slice(None)), :])
-            sett = [und]
-            cnt = thisnum
-        else:
-            sett.append(und)
-            cnt += thisnum
-    result.append(exceldf.loc[(sett, slice(None)), :])
+    for sec in std_df["sector"].unique():
+        try:
+            result[sec] = exceldf.loc[[sec], :]
+        except:
+            pass
+    # cnt = 0
+    # sett = []
+    # for und in undmeanret.index:
+    #     thisnum = undrownum[und]
+    #     if thisnum + cnt > 120:
+    #         result.append(exceldf.loc[(sett, slice(None)), :])
+    #         sett = [und]
+    #         cnt = thisnum
+    #     else:
+    #         sett.append(und)
+    #         cnt += thisnum
+    # result.append(exceldf.loc[(sett, slice(None)), :])
 
     # 生成json数据
     jsondf = std_df.reset_index(drop=True)
@@ -529,13 +569,16 @@ if __name__ == "__main__":
     # 生成excel图片
     direc = f"E:\\KurStrategy\\dailySummary\\{date}\\picfile\\"
     Path(direc).mkdir(parents=True, exist_ok=True)
-    for i in range(len(result)):
+    for i in result:
         dfi.export(
             result[i],
-            f"{direc}{date}_selectSetSimp_{i+1}.png",
+            f"{direc}{date}_{i}.png",
             fontsize=2,
             dpi=900,
             table_conversion="chrome",
             chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
             max_rows=-1,
         )
+
+
+# main("20250421")
