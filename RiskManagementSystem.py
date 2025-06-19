@@ -121,7 +121,7 @@ def findUnderlyingOptionInfoCommodity(date=None):
     margin_ratio = pd.read_sql(sql=SQL_cmd, con=CCF.market_base)
     SQL_cmd = f"""
     SELECT PRODUCT_ID as product, WIND_INDUSTRYNAME1 as sector
-    FROM WindIndustry
+    FROM WindIndustry_Kurt
     WHERE PRODUCT_ID IN {tuple(margin_ratio['product'])}
     """
     secinfo = pd.read_sql(sql=SQL_cmd, con=CCF.research)
@@ -178,6 +178,15 @@ def findUnderlyingOptionInfoCommodity(date=None):
     return merged_dict
 
 
+def readPosLimit():
+    SQL_cmd = f"""
+    SELECT *
+    FROM OptionLimitPos
+    """
+    max_open_interest = pd.read_sql(sql=SQL_cmd, con=CCF.research)
+    return max_open_interest.set_index("product").to_dict("index")
+
+
 def findUnderlyingOptionInfoETF(date=None):
     if date == None:
         date = dt.date.today().strftime("%Y%m%d")
@@ -223,6 +232,16 @@ def findUnderlyingOptionInfoETF(date=None):
             merged_dict[key]["product"] = "(华)科创50"
         elif key[0] == "159901":
             merged_dict[key]["product"] = "(易)深证100"
+        elif key[0] == "159919":
+            merged_dict[key]["product"] = "(嘉)沪深300"
+        elif key[0] == "159922":
+            merged_dict[key]["product"] = "(嘉)中证500"
+        # elif key[0] == "159928":
+        #     merged_dict[key]["product"] = "(嘉)创业板"
+        # elif key[0] == "159939":
+        #     merged_dict[key]["product"] = "(嘉)中证1000"
+        # else:
+        #     del merged_dict[key]
     return merged_dict
 
 
@@ -374,7 +393,7 @@ def findOptionQuote(instrument, date):
     return result
 
 
-optionINFO = findAllInfo()
+optionINFOdict = {}
 
 
 class OptionPortfolio(object):
@@ -418,6 +437,9 @@ class OptionPortfolio(object):
             elif self.underlying_instr_id[:2] == "MO":
                 self.underlying_instr_id = "IM" + self.underlying_instr_id[2:]
             self.expiredate = info.iloc[0]["expiredate"]
+            if today not in optionINFOdict:
+                optionINFOdict[today] = findAllInfo(today)
+            optionINFO = optionINFOdict[today]
             if (self.underlying_instr_id, self.expiredate) not in optionINFO:
                 raise Exception(
                     "Error, portfolio has no basic info",
@@ -462,14 +484,14 @@ class OptionPortfolio(object):
                 # multiplier = self.Undinfo['option_multiple']
                 if np.isnan(optclose) and np.isnan(optask) and np.isnan(optbid):
                     logging.error(
-                        f"无法获取期权数据: 日期={date}, 合约={option_id}, 取做小tick"
+                        f"无法获取期权数据: 日期={today}, 合约={option_id}, 取做小tick"
                     )
                     #### 如果期权盘口价格数据缺失，则使用最小tick进行后续计算
                     optask = optbid = optclose = self.Undinfo["price_tick"]
                     # raise Exception(f"期权价格数据缺失: {option_id}")
                 elif np.isnan(optask) or np.isnan(optbid):
                     logging.error(
-                        f"无法获取期权盘口数据: 日期={date}, 合约={option_id}, 取close"
+                        f"无法获取期权盘口数据: 日期={today}, 合约={option_id}, 取close"
                     )
                     optask = optbid = optclose
                     # raise Exception(f"期权价格数据缺失: {option_id}")
@@ -816,11 +838,14 @@ class OptionPortfolio(object):
     #     return result
 
 
-if __name__ == "__main__":
-    # date = dt.date.today().strftime("%Y%m%d")
-    date = "20250515"
+def main(date=None):
+
+    if date is None:
+        date = dt.date.today().strftime("%Y%m%d")
+    # date = "20250515"
 
     set_log(date)
+    # print(date)
 
     accleveldf = pd.read_excel(f"E://ExePort//kurt//{date}//{date}_position.xlsx").iloc[
         :, 1:
@@ -852,8 +877,9 @@ if __name__ == "__main__":
         if row["策略名"] not in strategydict:
             continue
         strategyobj = strategydict[row["策略名"]]
-        accleveldf.loc[ind, "当前总占用保证金"] = strategyobj.margin
+        accleveldf.loc[ind, "当前总占用保证金"] = strategyobj.margin * row["持仓"]
         accleveldf.loc[ind, "标的合约"] = strategyobj.underlying_instr_id
+        # print(row["策略名"], strategyobj.Undinfo)
         accleveldf.loc[ind, "标的品种"] = strategyobj.Undinfo["product"]
         accleveldf.loc[ind, "标的板块"] = strategyobj.Undinfo["sector"]
         accleveldf.loc[ind, "乘数"] = strategyobj.Undinfo["option_multiple"]
@@ -956,6 +982,19 @@ if __name__ == "__main__":
                 strategyobj.margin, 1, ivlevel=1.25
             )
         )
+    accleveldf.loc[accleveldf["当前总占用保证金"] < 0, "当前总占用保证金"] = np.nan
+    accleveldf.loc[accleveldf["当前总占用保证金"] < 0, accleveldf.columns[19] :] = (
+        np.nan
+    )
+    accleveldf["10%关注"] = np.where(
+        accleveldf["期权方向"] == "c",
+        accleveldf["下一交易日最恶劣情景"] > accleveldf["10LGDwithSameIV"],
+        np.where(
+            accleveldf["期权方向"] == "p",
+            accleveldf["下一交易日最恶劣情景"] < accleveldf["10LGDwithSameIV"],
+            False,
+        ),
+    )
 
     accleveldf.to_excel(f"E://ExePort//kurt//{date}//{date}_acclevelSummary.xlsx")
 
@@ -1114,7 +1153,7 @@ if __name__ == "__main__":
     )
 
     result.to_excel(f"E://ExePort//kurt//{date}//{date}_optionLevelSummary.xlsx")
-
+    poslimit = readPosLimit()
     accportlevresult = []
 
     for acc in result["账户"].unique():
@@ -1147,6 +1186,8 @@ if __name__ == "__main__":
                 print(f"error in {und} {port} {date}", e)
                 continue
             ase = None
+            posdeltapos = 0
+            negdeltapos = 0
             for option_id, detail in opthis.portInfo.items():
                 if not prod[0].isalpha():
                     if ase is None:
@@ -1200,6 +1241,16 @@ if __name__ == "__main__":
                             * detail["position"]
                             * multi
                         )
+                if detail["options_type"] == "c":
+                    if detail["position"] > 0:
+                        posdeltapos += detail["position"]
+                    else:
+                        negdeltapos -= detail["position"]
+                else:
+                    if detail["position"] > 0:
+                        negdeltapos += detail["position"]
+                    else:
+                        posdeltapos -= detail["position"]
             var90 = ase.quantile(0.1)
             var95 = ase.quantile(0.05)
             var99 = ase.quantile(0.01)
@@ -1208,15 +1259,43 @@ if __name__ == "__main__":
             var95lgdratio = var95 / marginsum
             var99lgdratio = var99 / marginsum
             var100lgdratio = var100 / marginsum
+
+            if prod in poslimit:
+                poslimitdict = poslimit[prod]
+                limittype = poslimitdict["limittype"]
+                quota = poslimitdict["LastMonth"]
+                if limittype == "single":
+                    poselse = quota - posdeltapos
+                    negelse = quota - negdeltapos
+                    bothelse = None
+                else:
+                    bothelse = quota - posdeltapos - negdeltapos
+                    poselse = None
+                    negelse = None
+            else:
+                poselse = None
+                negelse = None
+                bothelse = None
+
+            minelse = min(
+                [x for x in [poselse, negelse, bothelse, 100] if x is not None]
+            )
+            flag = True if minelse < 100 else False
+
             accportlevresult.append(
                 [
                     acc,
                     und,
+                    prod,
                     port,
                     sec,
                     cdtm,
                     tdtm,
                     marginsum,
+                    poselse,
+                    negelse,
+                    bothelse,
+                    flag,
                     tottaldelta,
                     totaldelta_price,
                     totaldelta_lot,
@@ -1241,11 +1320,16 @@ if __name__ == "__main__":
         columns=[
             "账户",
             "标的",
+            "标的品种",
             "期权组合",
             "标的板块",
             "到期日历日",
             "到期交易日",
             "总保证金",
+            "剩余多头额度",
+            "剩余空头额度",
+            "剩余净额",
+            "超限预警(100)",
             "delta",
             "$delta",
             "lotdelta",
@@ -1267,3 +1351,77 @@ if __name__ == "__main__":
     )
 
     accportlevresult.to_excel(f"E://ExePort//kurt//{date}//{date}_undLevelSummary.xlsx")
+
+    with pd.ExcelWriter(
+        "E://ExePort//acclevelSummary.xlsx",
+        engine="openpyxl",
+        mode="a",
+        if_sheet_exists="replace",
+    ) as writer:
+        accleveldf.to_excel(writer, sheet_name="rawdata")
+    with pd.ExcelWriter(
+        "E://ExePort//undLevelSummary.xlsx",
+        engine="openpyxl",
+        mode="a",
+        if_sheet_exists="replace",
+    ) as writer:
+        accportlevresult.to_excel(writer, sheet_name="RawData")
+
+    risky = accportlevresult[accportlevresult["90%var"] < -0.1][
+        [
+            "账户",
+            "标的",
+            "标的板块",
+            "到期日",
+            "$delta",
+            "lotdelta",
+            "90%var",
+            "90%varLGDratio",
+        ]
+    ]
+    risky = (
+        risky.sort_values(by="90%var", ascending=False)
+        .groupby(["标的", "账户"])
+        .first()
+    )
+    risky = risky.round(2)
+    dfi.export(
+        risky,
+        f"E://ExePort//kurt//{date}//picfile//risky.png",
+        fontsize=2,
+        dpi=900,
+        table_conversion="chrome",
+        chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
+        max_rows=-1,
+    )
+
+    risky2 = accleveldf[accleveldf["10%关注"] == True][
+        [
+            "账户",
+            "当前总占用保证金",
+            "策略名",
+            "标的合约",
+            "期权方向",
+            "下一交易日最恶劣情景",
+            "10LGDwithSameIV",
+        ]
+    ]
+    risky2 = (
+        risky2.sort_values(by="当前总占用保证金", ascending=False)
+        .groupby(["期权方向", "标的合约", "策略名"])
+        .first()
+    )
+    risky2 = risky2.round(2)
+    dfi.export(
+        risky2,
+        f"E://ExePort//kurt//{date}//picfile//risky2.png",
+        fontsize=2,
+        dpi=900,
+        table_conversion="chrome",
+        chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
+        max_rows=-1,
+    )
+
+
+if __name__ == "__main__":
+    main("20250523")

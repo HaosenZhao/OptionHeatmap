@@ -9,8 +9,14 @@ import os
 import datetime as dt
 import logging
 from datetime import datetime
-import OptionRiskMetrixETF as ORME
-import OptionRiskMetrix as ORM
+from smtplib import SMTP_SSL
+from email.header import Header
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from email.mime.image import MIMEImage
+from os import listdir
+from os.path import isfile, join, isdir
 
 
 def readEXEPORTportfolio():
@@ -57,13 +63,13 @@ def readALLSTGTRADE(begin_tag):
     if begin_tag in stgtreaddict:
         return stgtreaddict[begin_tag].copy()
     sqlcmd = f"""
-    SELECT operator, traded_time, init_trading_day, fund_name, portfolio_name,stg_tags, direction, volume_traded, traded_price, commission
+    SELECT operator, traded_time, init_trading_day, fund_name, portfolio_name,stg_tags, direction, volume_traded, price as traded_price, commission
     FROM stg_trade_raw
     WHERE (status = 'DONE' or status = 'PORT_DONE') and init_trading_day >= '20250313' and stg_tags like '{begin_tag}%%'
     """
     df = pd.read_sql(sql=sqlcmd, con=CCF.EXEPORT_engine)
     sqlcmd = f"""
-    SELECT operator, traded_time, init_trading_day, fund_name, portfolio_name,stg_tags, direction, volume_traded, traded_price, commission
+    SELECT operator, traded_time, init_trading_day, fund_name, portfolio_name,stg_tags, direction, volume_traded, price as traded_price, commission
     FROM stg_trade_raw
      WHERE (status = 'DONE' or status = 'PORT_DONE') and portfolio_name in {tuple(df['portfolio_name'].unique())}
     """
@@ -212,7 +218,7 @@ def mergePos(prev_df, today_df, date):
     # return pd.concat([prev_df, today_df])
 
 
-def generateDaysition(date, begin_tag):
+def generateDayPosition(date, begin_tag):
     if date < "20250312":
         raise Exception("date must be greater than 20250312")
     if date == "20250312":
@@ -269,7 +275,12 @@ def generateDaysition(date, begin_tag):
         posdf = pd.concat([posdf, thisposdf])
         tradedf = pd.concat([tradedf, thistradedf])
     tradedf.rename(columns={"持仓均价": "交易价格", "持仓": "交易手数"}, inplace=True)
-    acclastdaypos.reset_index(drop=True).to_excel(
+    tradedf["交易额"] = (
+        tradedf["交易手数"]
+        * tradedf["交易价格"]
+        * tradedf["策略名"].apply(lambda x: portfoliosFROMEXEPORT[x]["multiplier"])
+    )
+    lastdaypos.reset_index(drop=True).to_excel(
         f"E://ExePort//{begin_tag}//{date}//{date}_lastdaypos.xlsx"
     )
     posdf.reset_index(drop=True).to_excel(
@@ -282,6 +293,31 @@ def generateDaysition(date, begin_tag):
         f"E://ExePort//{begin_tag}//{date}//{date}_portfoliosFROMEXEPORT.json", "w"
     ) as f:
         json.dump(portfoliosFROMEXEPORT, f)
+    pivot_table = pd.pivot_table(
+        tradedf,
+        values=["交易手数", "交易价格", "交易额"],
+        index=["账户", "方向", "策略名"],
+        aggfunc={"交易手数": "sum", "交易价格": "mean", "交易额": "sum"},
+    )
+    sumtradev = str(int(tradedf["交易额"].sum()))
+    sumtradev = f"账户交易额({sumtradev})"
+    # Add column sum for 交易额 by 账户, but only show in first row of each 账户
+    pivot_table[sumtradev] = pivot_table.groupby("账户")["交易额"].transform("sum")
+    pivot_table[sumtradev] = pivot_table[sumtradev].mask(
+        pivot_table.groupby("账户").cumcount() > 0, ""
+    )
+    path = f"E://ExePort//{begin_tag}//{date}//picfile//"
+    CCF.mkdir(path)
+    dfi.export(
+        pivot_table,
+        f"{path}todaytradf.png",
+        fontsize=2,
+        dpi=900,
+        table_conversion="chrome",
+        chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
+        max_rows=-1,
+    )
+
     # sumdf = (
     #     tradedf.groupby("账户")["PNL"].sum().sort_values(ascending=False).reset_index()
     # )
@@ -343,9 +379,87 @@ def summaryAllTrade(begin_tag):
 # generateDayPosition("20250515", "kurt")
 
 
-if __name__ == "__main__":
-    # summaryAllTrade("kurt")
+def main(date=None):
+    if date is None:
+        date = datetime.now().strftime("%Y%m%d")
+    generateDayPosition(date, "kurt")
 
-    today = datetime.now().strftime("%Y%m%d")
-    # today = "20250515"
-    generateDayPosition(today, "kurt")
+
+if __name__ == "__main__":
+    date = dt.date.today().strftime("%Y%m%d")
+    main(date)
+
+    try:
+        send_usr = "zhaohaosen@hths-capital.com"  # 发件人
+        send_pwd = "199777ttZHS"  # 授权码，邮箱设置
+        email_server = "smtp.exmail.qq.com"
+        email_title = "KurtPostion (" + date + ")"  # 邮件主题
+        msg = MIMEMultipart()  # 构建主体
+        msg["Subject"] = Header(email_title, "utf-8")  # 邮件主题
+        msg["From"] = send_usr  # 发件人
+        # reverse = ["zhaohaosen@hths-capital.com"]
+        reverse = [
+            "wenxiao@hths-capital.com",
+            "lili@hths-capital.com",
+            "zhaohaosen@hths-capital.com",
+        ]  # 接收者
+        # reverse = ["lili@hths-capital.com"]  # 接收者
+        msg["To"] = ", ".join(reverse)  # 收件人--这里是昵称
+
+        html_img = """<h3 align = 'center'>"""
+
+        path = f"E:\\ExePort\\kurt\\{date}\\picfile\\"
+        onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+        pic_files = [f for f in onlyfiles if f.split(".")[-1] == "png"]
+
+        for i, pic in enumerate(pic_files, 1):
+            content = pic.split(".")[0]  # 使用文件名作为内容标题
+            html_img += f"""
+            <br><img src="cid:image{i}"></br>"""
+
+            f = open(path + pic, "rb")  # 打开图片
+            msgimage = MIMEImage(f.read())
+            f.close()
+            msgimage.add_header("Content-ID", f"<image{i}>")  # 设置图片
+            msg.attach(msgimage)
+
+        html_img += """</h3>"""  # 完成HTML格式
+        path = f"E:\\ExePort\\kurt\\{date}\\"
+        # 添加所有xlsx文件作为附件
+        onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+        excel_files = [f for f in onlyfiles if f.split(".")[-1] == "xlsx"]
+
+        for excel_file in excel_files:
+            attchment = MIMEApplication(open(path + excel_file, "rb").read())  # 文件
+            attchment.add_header(
+                "Content-Disposition", "attachment", filename=excel_file
+            )
+            msg.attach(attchment)  # 添加附件到邮件
+
+        # path = f"E:\\ExePort\\"
+        # # 添加所有xlsx文件作为附件
+        # onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+        # excel_files = [f for f in onlyfiles if f.split(".")[-1] == "xlsx"]
+
+        # for excel_file in excel_files:
+        #     attchment = MIMEApplication(open(path + excel_file, "rb").read())  # 文件
+        #     attchment.add_header(
+        #         "Content-Disposition", "attachment", filename=excel_file
+        #     )
+        #     msg.attach(attchment)  # 添加附件到邮件
+
+        msg.attach(MIMEText(html_img, "html", "utf-8"))  # 添加到邮件正文
+        smtp = SMTP_SSL(email_server)  # 指定邮箱服务器
+        smtp.ehlo(email_server)  # 部分邮箱需要
+        smtp.login(send_usr, send_pwd)  # 登录邮箱
+        smtp.sendmail(send_usr, reverse, msg.as_string())  # 分别是发件人、收件人、格式
+        smtp.quit()  # 结束服务
+        print("邮件发送完成--")
+    except:
+        print(6)
+
+#     # summaryAllTrade("kurt")
+
+#     today = datetime.now().strftime("%Y%m%d")
+#     today = "20250519"
+#     generateDayPosition(today, "kurt")

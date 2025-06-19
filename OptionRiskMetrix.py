@@ -258,7 +258,7 @@ def findUnderlyingOptionInfo(date):
     margin_ratio = pd.read_sql(sql=SQL_cmd, con=CCF.market_base)
     SQL_cmd = f"""
     SELECT PRODUCT_ID as product, WIND_INDUSTRYNAME1 as sector
-    FROM WindIndustry
+    FROM WindIndustry_Kurt
     WHERE PRODUCT_ID IN {tuple(margin_ratio['product'])}
     """
     secinfo = pd.read_sql(sql=SQL_cmd, con=CCF.research)
@@ -314,6 +314,7 @@ def getPayoffSeries(product, dtm, underlying_close, strike, opt_typ):
 def main(date):
     # 读取期权价格数据
     optdf = findOptionPrice(date)
+    # print(123123)
     # 设置期权价格数据的索引
     optdf.index = optdf["instrument_id"]
     # 调整保证金
@@ -492,7 +493,7 @@ def main(date):
             "sector",
             "NumLimit",
             "EMarginRet(C)",
-            "EMarginRet(T)",
+            "MaxPayoff",
             "margin",
             "delta",
             "tdtm",
@@ -502,8 +503,9 @@ def main(date):
     ].dropna()
     exceldf = exceldf[exceldf["bid"] > 0].reset_index()
     exceldf["EMarginRet(C)"] = (exceldf["EMarginRet(C)"] * 100).round(2)
-    exceldf["EMarginRet(T)"] = (exceldf["EMarginRet(T)"] * 100).round(2)
+    # exceldf["EMarginRet(T)"] = (exceldf["EMarginRet(T)"] * 100).round(2)
     exceldf["delta"] = (exceldf["delta"]).round(2)
+    exceldf["MaxPayoff"] = (exceldf["MaxPayoff"]).round(2)
     # undrownum = exceldf.groupby("underlying_instr_id").size()
     # undmeanret = (
     #     exceldf.groupby("underlying_instr_id")["EMarginRet(T)"]
@@ -579,6 +581,3 @@ def main(date):
             chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
             max_rows=-1,
         )
-
-
-# main("20250421")

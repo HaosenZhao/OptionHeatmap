@@ -103,6 +103,10 @@ def findOptionPrice(date):
                 con_undcode = "(华)科创50"
             elif underlying_id == "159901":
                 con_undcode = "(易)深证100"
+            elif underlying_id == "159919":
+                con_undcode = "(嘉)沪深300"
+            elif underlying_id == "159922":
+                con_undcode = "(嘉)中证500"
             conepire = expiredate[2:6]
             df.at[index, "ezCode"] = f"{con_undcode}_{conepire}_{k}{type_}"
             iv = CCF.IV(row["option_close"], und_close, k, ttm / 243, 0, type_)
