@@ -1424,4 +1424,4 @@ def main(date=None):
 
 
 if __name__ == "__main__":
-    main("20250523")
+    main("20250620")

@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import commodity_common_functions as CCF
 import seaborn as sns
 import dataframe_image as dfi
@@ -311,15 +311,11 @@ def getPayoffSeries(product, dtm, underlying_close, strike, opt_typ):
     return payoffser
 
 
-def main(date):
-    # 读取期权价格数据
+def longKurtTemp(date):
     optdf = findOptionPrice(date)
     # print(123123)
     # 设置期权价格数据的索引
     optdf.index = optdf["instrument_id"]
-    # 调整保证金
-    optdf["margin"] = optdf["margin"] * 1.2
-    optdf["margin"] = optdf["margin"].round(0)
     # 计算期权的收益
     payoffmap = {}
 
@@ -338,7 +334,8 @@ def main(date):
         return pd.Series(
             [
                 payoff.mean(),
-                payoff.quantile(0.95),
+                payoff.median(),
+                payoff.quantile(0.9),
                 payoff.quantile(0.99),
                 payoff.max(),
                 len(payoff),
@@ -352,9 +349,168 @@ def main(date):
     optdf["TradingValue"] = (
         optdf["option_close"] * optdf["multiplier"] * optdf["volume"]
     )
-    optdf[["ExpectedPayoff", "Q95Payoff", "Q99Payoff", "MaxPayoff", "DaysInSample"]] = (
-        optdf.apply(calculate_payoff, axis=1)
+    optdf[
+        [
+            "ExpectedPayoff",
+            "MedianPayoff",
+            "Q90Payoff",
+            "Q99Payoff",
+            "MaxPayoff",
+            "DaysInSample",
+        ]
+    ] = optdf.apply(calculate_payoff, axis=1)
+    # 计算期权的信用收取
+    optdf["BuyCost"] = optdf["option_close"] * optdf["multiplier"] + optdf["commission"]
+    # 计算期权的预期承保费
+    optdf["ExpectedProfit"] = optdf["ExpectedPayoff"] - optdf["BuyCost"]
+    optdf["MaxProfit"] = optdf["MaxPayoff"] - optdf["BuyCost"]
+    optdf["Q99Profit"] = optdf["Q99Payoff"] - optdf["BuyCost"]
+    optdf["Q90Profit"] = optdf["Q90Payoff"] - optdf["BuyCost"]
+    optdf["MedianProfit"] = optdf["MedianPayoff"] - optdf["BuyCost"]
+
+    optdf["ExpectedCostRet(C)"] = (
+        optdf["ExpectedProfit"]
+        / optdf["BuyCost"]
+        # * 365
+        # / optdf["cdtm"]
     )
+    optdf["MaxCostRet(C)"] = (
+        optdf["MaxProfit"]
+        / optdf["BuyCost"]
+        # * 365
+        # / optdf["cdtm"]
+    )
+    optdf["Q99CostRet(C)"] = (
+        optdf["Q99Profit"]
+        / optdf["BuyCost"]
+        # * 365
+        # / optdf["cdtm"]
+    )
+    optdf["Q90CostRet(C)"] = (
+        optdf["Q90Profit"]
+        / optdf["BuyCost"]
+        # * 365
+        # / optdf["cdtm"]
+    )
+    optdf["MedianCostRet(C)"] = (
+        optdf["MedianProfit"]
+        / optdf["BuyCost"]
+        # * 365
+        # / optdf["cdtm"]
+    )
+
+    # 删除空值
+    optdf = optdf.dropna()
+
+    sql_cmd = f"""
+    SELECT *
+    FROM Gap_Ratio 
+    """
+    rvdf = pd.read_sql(sql_cmd, con=CCF.research)
+    rvdf["dailyret"] = rvdf["close_main"] / rvdf["lastday_close"] - 1
+    rvdf["dailyrv"] = np.square(rvdf["dailyret"])
+    rvdf["minrv"] = rvdf["intraday_var"] + rvdf["gap_var"]
+    rvdf["gapRatio"] = rvdf["gap_var"] / rvdf["minrv"]
+
+    def calpara(df):
+        df = df.sort_values("trading_date")
+        miniAnnualRV = np.sqrt(df.tail(30)["minrv"].mean() * 243)
+        gapRatio = df.tail(30)["gap_var"].sum() / df.tail(30)["minrv"].sum()
+        kurtosisShort = df.tail(240)["dailyret"].kurt()
+        kurtosisLong = df["dailyret"].kurt()
+        return pd.Series(
+            [miniAnnualRV, gapRatio, kurtosisShort, kurtosisLong],
+            index=["1minAnnualRV", "gapRatio", "kurtosisShort", "kurtosisLong"],
+        )
+
+    summary = rvdf.groupby("product_id").apply(calpara).reset_index()
+    sql_cmd = f"""
+    WITH latest_vix AS (
+        SELECT 
+            product_id,
+            vix,
+            trading_date,
+            future_price,
+            PERCENT_RANK() OVER (PARTITION BY product_id ORDER BY vix) as vix_percentile,
+            PERCENT_RANK() OVER (PARTITION BY product_id ORDER BY future_price) as price_percentile,
+            COUNT(*) OVER (PARTITION BY product_id) as numVIXsamples
+        FROM CommodityVIX
+    )
+    SELECT product_id, vix, vix_percentile, price_percentile, numVIXsamples
+    FROM latest_vix 
+    WHERE trading_date = '{date}'
+    """
+    vixdf = (
+        pd.read_sql(sql_cmd, con=CCF.research)
+        .drop_duplicates(subset=["product_id"])
+        .reset_index(drop=True)
+    )
+    vixrvresult = pd.merge(summary, vixdf, on="product_id", how="outer")
+
+    totalresult = pd.merge(
+        optdf, vixrvresult, left_on="product", right_on="product_id", how="left"
+    )
+    totalresult.to_excel(f"E:\\KurStrategy\\dailySummary\\{date}\\{date}_longkurt.xlsx")
+
+
+def main(date):
+    # 读取期权价格数据
+    # print(123123)
+    optdf = findOptionPrice(date)
+    # print(123123)
+    # 设置期权价格数据的索引
+    optdf.index = optdf["instrument_id"]
+    # 调整保证金
+    optdf["margin"] = optdf["margin"] * 1.2
+    optdf["margin"] = optdf["margin"].round(0)
+    # 计算期权的收益
+    payoffmap = {}
+
+    def calculate_payoff(row):
+        ins_id = row["instrument_id"]
+        product = row["product"]
+        dtm = row["tdtm"]
+        underlying_close = row["underlying_close"]
+        strike = row["strike"]
+        opt_typ = row["opt_typ"]
+        # print(product, dtm, underlying_close, strike, opt_typ)
+        try:
+            payoff = (
+                getPayoffSeries(product, dtm, underlying_close, strike, opt_typ)
+                * row["multiplier"]
+            )
+            payoffmap[ins_id] = payoff
+            return pd.Series(
+                [
+                    payoff.mean(),
+                    payoff.quantile(0.95),
+                    payoff.quantile(0.99),
+                    payoff.max(),
+                    len(payoff),
+                    payoff.idxmax(),
+                ]
+            )
+        except:
+            payoff = pd.Series([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+            return payoff
+
+    optdf["NumLimit"] = (
+        np.abs(np.log(optdf["strike"] / optdf["underlying_close"]))
+        / optdf["updownlimit"]
+    ).round(2)
+    optdf["TradingValue"] = (
+        optdf["option_close"] * optdf["multiplier"] * optdf["volume"]
+    )
+    optdf[
+        [
+            "ExpectedPayoff",
+            "Q95Payoff",
+            "Q99Payoff",
+            "MaxPayoff",
+            "DaysInSample",
+            "worstDay",
+        ]
+    ] = optdf.apply(calculate_payoff, axis=1)
     # 计算期权的信用收取
     optdf["CreditCollected"] = optdf["option_close"] * optdf["multiplier"]
     # 计算期权的预期承保费
@@ -456,6 +612,8 @@ def main(date):
         / optdf["tdtm"]
     )
 
+    optdf["Eret5Threshold"] = optdf["EMarginRet(C)"] > 0.05
+
     # 删除空值
     optdf = optdf.dropna()
 
@@ -494,6 +652,7 @@ def main(date):
             "NumLimit",
             "EMarginRet(C)",
             "MaxPayoff",
+            "worstDay",
             "margin",
             "delta",
             "tdtm",
@@ -581,3 +740,8 @@ def main(date):
             chrome_path="C:\Program Files\Google\Chrome Dev\Application\chrome.exe",
             max_rows=-1,
         )
+
+    longKurtTemp(date)
+
+
+# main("20250723")

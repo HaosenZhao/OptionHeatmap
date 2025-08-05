@@ -93,10 +93,14 @@ def transferToDict(df):
         else:
             prevpos = result[stgname]["持仓"]
             thispos = row["持仓"]
-            result[stgname]["持仓均价"] = (
-                prevpos * result[stgname]["持仓均价"] + thispos * row["持仓均价"]
-            ) / (prevpos + thispos)
-            result[stgname]["持仓"] = prevpos + thispos
+            if prevpos + thispos == 0:
+                print(f"{stgname} {prevpos} {thispos} {row['账户']}")
+                del result[stgname]
+            else:
+                result[stgname]["持仓均价"] = (
+                    prevpos * result[stgname]["持仓均价"] + thispos * row["持仓均价"]
+                ) / (prevpos + thispos)
+                result[stgname]["持仓"] = prevpos + thispos
     return result
 
 
