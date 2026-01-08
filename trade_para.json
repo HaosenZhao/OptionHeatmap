@@ -1,0 +1,1010 @@
+{
+  "A": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "AD": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 1.0,
+    "open_money_by_vol": 10.0,
+    "margin_ratio": 0.15
+  },
+  "AD_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "AG": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 15,
+    "price_tick": 0.5,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.16999999999999998
+  },
+  "AG_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 15,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "AL": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.15
+  },
+  "AL_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "AO": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 3.5,
+    "margin_ratio": 0.15
+  },
+  "AO_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "AP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "APC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "APP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "AU": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 1000,
+    "price_tick": 0.02,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.16999999999999998
+  },
+  "AU_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 1000,
+    "price_tick": 0.02,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "A_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "B": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.2,
+    "margin_ratio": 0.2
+  },
+  "BR": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.15
+  },
+  "BR_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "BU": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.15
+  },
+  "BU_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "BZ": {
+    "exchange_id": "DCE",
+    "volume_multiple": 30,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.08
+  },
+  "BZ_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 30,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.01,
+    "margin_ratio": 0.1
+  },
+  "B_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.21000000000000002,
+    "margin_ratio": 0.1
+  },
+  "C": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.6,
+    "margin_ratio": 0.2
+  },
+  "CF": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.2
+  },
+  "CFC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "CFP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "CJ": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "CJC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "CJP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "CS": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.2,
+    "margin_ratio": 0.2
+  },
+  "CS_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.21000000000000002,
+    "margin_ratio": 0.1
+  },
+  "CU": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 2.0,
+    "open_money_by_vol": 5.0,
+    "margin_ratio": 0.15
+  },
+  "CU_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 2.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "C_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.61,
+    "margin_ratio": 0.1
+  },
+  "EB": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "EB_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "EG": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "EG_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "ETF_O": {
+    "exchange_id": "SSE",
+    "volume_multiple": 10265,
+    "price_tick": 0.0001,
+    "open_money_by_vol": 1.68,
+    "margin_ratio": 0.1
+  },
+  "FG": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "FGC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "FGP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "FU": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.1
+  },
+  "FU_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "HO": {
+    "exchange_id": "CFFEX",
+    "volume_multiple": 100,
+    "price_tick": 0.2,
+    "open_money_by_vol": 15.01,
+    "margin_ratio": 0.12
+  },
+  "I": {
+    "exchange_id": "DCE",
+    "volume_multiple": 100,
+    "price_tick": 0.1,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "IO": {
+    "exchange_id": "CFFEX",
+    "volume_multiple": 100,
+    "price_tick": 0.2,
+    "open_money_by_vol": 15.01,
+    "margin_ratio": 0.12
+  },
+  "I_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 100,
+    "price_tick": 0.1,
+    "open_money_by_vol": 2.0100000000000002,
+    "margin_ratio": 0.1
+  },
+  "JD": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "JD_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "L": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "LC": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 1,
+    "price_tick": 10.0,
+    "open_money_by_vol": 3.0,
+    "margin_ratio": 0.2
+  },
+  "LC_O": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 1,
+    "price_tick": 10.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "LG": {
+    "exchange_id": "DCE",
+    "volume_multiple": 90,
+    "price_tick": 0.25,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "LG_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 90,
+    "price_tick": 0.25,
+    "open_money_by_vol": 1.01,
+    "margin_ratio": 0.1
+  },
+  "LH": {
+    "exchange_id": "DCE",
+    "volume_multiple": 16,
+    "price_tick": 2.5,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.2
+  },
+  "LH_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 16,
+    "price_tick": 2.5,
+    "open_money_by_vol": 1.51,
+    "margin_ratio": 0.1
+  },
+  "L_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "M": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "MA": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "MAC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "MAP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "MO": {
+    "exchange_id": "CFFEX",
+    "volume_multiple": 100,
+    "price_tick": 0.2,
+    "open_money_by_vol": 15.01,
+    "margin_ratio": 0.12
+  },
+  "M_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "NI": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 1,
+    "price_tick": 2.0,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.15
+  },
+  "NI_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 1,
+    "price_tick": 2.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "OI": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.2
+  },
+  "OIC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "OIP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "OP": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 40,
+    "price_tick": 1.0,
+    "open_money_by_vol": 10.0,
+    "margin_ratio": 0.15
+  },
+  "OP_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 40,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "P": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 2.5,
+    "margin_ratio": 0.2
+  },
+  "PB": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.15
+  },
+  "PB_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PD_O": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 1000,
+    "price_tick": 0.05,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PF": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "PFC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PFP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PG": {
+    "exchange_id": "DCE",
+    "volume_multiple": 20,
+    "price_tick": 0.2,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "PG_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 20,
+    "price_tick": 0.2,
+    "open_money_by_vol": 1.01,
+    "margin_ratio": 0.1
+  },
+  "PK": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.8,
+    "margin_ratio": 0.2
+  },
+  "PKC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PKP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PL": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "PLC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PLP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PP": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "PP_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "PR": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 15,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "PRC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 15,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PRP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 15,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PS": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 3,
+    "price_tick": 1.0,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.2
+  },
+  "PS_O": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 3,
+    "price_tick": 1.0,
+    "open_money_by_vol": 2.0100000000000002,
+    "margin_ratio": 0.1
+  },
+  "PT_O": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 1000,
+    "price_tick": 0.05,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PX": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "PXC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "PXP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "P_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "RB": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.15
+  },
+  "RB_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "RM": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.8,
+    "margin_ratio": 0.2
+  },
+  "RMC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "RMP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "RU": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 1.0,
+    "open_money_by_vol": 3.0,
+    "margin_ratio": 0.15
+  },
+  "RU_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SA": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "SAC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SAP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SC": {
+    "exchange_id": "INE",
+    "volume_multiple": 1000,
+    "price_tick": 0.05,
+    "open_money_by_vol": 10.0,
+    "margin_ratio": 0.1
+  },
+  "SC_O": {
+    "exchange_id": "INE",
+    "volume_multiple": 1000,
+    "price_tick": 0.05,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SF": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "SFC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SFP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SH": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 30,
+    "price_tick": 0.5,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.2
+  },
+  "SHC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 30,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SHP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 30,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SI": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 2.0,
+    "margin_ratio": 0.2
+  },
+  "SI_O": {
+    "exchange_id": "GFEX",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SM": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "SMC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SMP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SN": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 1,
+    "price_tick": 2.0,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.15
+  },
+  "SN_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 1,
+    "price_tick": 2.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SP": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 1.0,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.15
+  },
+  "SP_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 10,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SR": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.2
+  },
+  "SRC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "SRP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "TA": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "TAC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "TAP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "UR": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 1.0,
+    "margin_ratio": 0.2
+  },
+  "URC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "URP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 20,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  },
+  "V": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.5,
+    "margin_ratio": 0.2
+  },
+  "V_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 5,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "Y": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 2.5,
+    "margin_ratio": 0.2
+  },
+  "Y_O": {
+    "exchange_id": "DCE",
+    "volume_multiple": 10,
+    "price_tick": 0.5,
+    "open_money_by_vol": 0.51,
+    "margin_ratio": 0.1
+  },
+  "ZC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 100,
+    "price_tick": 0.1,
+    "open_money_by_vol": 150.0,
+    "margin_ratio": 0.5
+  },
+  "ZCC": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 100,
+    "price_tick": 0.1,
+    "open_money_by_vol": 150.01,
+    "margin_ratio": 0.1
+  },
+  "ZCP": {
+    "exchange_id": "CZCE",
+    "volume_multiple": 100,
+    "price_tick": 0.1,
+    "open_money_by_vol": 150.01,
+    "margin_ratio": 0.1
+  },
+  "ZN": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 1.5,
+    "margin_ratio": 0.15
+  },
+  "ZN_O": {
+    "exchange_id": "SHFE",
+    "volume_multiple": 5,
+    "price_tick": 1.0,
+    "open_money_by_vol": 0.0,
+    "margin_ratio": 0.1
+  }
+}

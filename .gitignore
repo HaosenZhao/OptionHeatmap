@@ -4,46 +4,23 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# VSCode
-.vscode/
-
-# 临时文件
-temp.xlsx
-*.tmp
-*.bak
-*.swp
-
-# 环境配置
-.env
-.venv
 env/
 venv/
-ENV/
+.env
 
-# 临时数据文件
-*.csv
-*.xlsx
-*.xls
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 
-# tempfile
-temp/
+# OS
+.DS_Store
+Thumbs.db
 
+# Project specific
+*.zip
+*.rar
+
+# Logs
+*.log

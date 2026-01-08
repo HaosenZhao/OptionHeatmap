@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio Scenario Table Analyzer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      .table-container {
+        margin: 20px 0;
+        overflow-x: auto;
+      }
+      .table-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #495057;
+      }
+      .table-responsive {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        max-height: 600px;
+        overflow: auto;
+      }
+      .table-responsive table {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      .table-responsive table th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 20;
+        border-bottom: 2px solid #dee2e6;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+      }
+      .table-responsive table th:first-child,
+      .table-responsive table td:first-child {
+        position: sticky;
+        left: 0;
+        background-color: #fff;
+        z-index: 10;
+        border-right: 2px solid #dee2e6;
+      }
+      .table-responsive table th:first-child {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        z-index: 30;
+        box-shadow: 2px 2px 2px -1px rgba(0, 0, 0, 0.1);
+      }
+      .parameter-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .portfolio-input {
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+      }
+      .saved-params {
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .param-item {
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 2px 0;
+      }
+      .param-item:hover {
+        background-color: #e9ecef;
+      }
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+      .error-message {
+        color: #dc3545;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+      }
+      .success-message {
+        color: #155724;
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+      }
+      .graph-container {
+        margin-top: 20px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+      .clickable-header {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .clickable-header:hover {
+        background-color: #e9ecef !important;
+      }
+      .clickable-index {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+      .clickable-index:hover {
+        background-color: #e9ecef !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <h1 class="text-center my-4">
+            <i class="fas fa-table"></i> Portfolio Scenario Table Analyzer
+          </h1>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Parameters Section -->
+        <div class="col-md-4">
+          <div class="parameter-section">
+            <h4><i class="fas fa-cog"></i> Parameters</h4>
+
+            <div class="mb-3">
+              <label for="future_id" class="form-label">Future ID</label>
+              <input
+                type="text"
+                class="form-control"
+                id="future_id"
+                value="TA601"
+                placeholder="e.g., TA601"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Portfolio Components</label>
+              <div class="table-responsive">
+                <table
+                  class="table table-sm table-bordered"
+                  id="portfolioTable"
+                >
+                  <thead class="table-light">
+                    <tr>
+                      <th>Instrument Code</th>
+                      <th>Quantity</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="portfolioTableBody">
+                    <tr>
+                      <td>
+                        <input
+                          type="text"
+                          class="form-control form-control-sm"
+                          placeholder="e.g., TA601C1600"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          class="form-control form-control-sm"
+                          placeholder="e.g., 1"
+                          step="0.01"
+                        />
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          onclick="removePortfolioRow(this)"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="d-flex gap-2 mb-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  onclick="addPortfolioRow()"
+                >
+                  <i class="fas fa-plus"></i> Add Row
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  onclick="clearPortfolioTable()"
+                >
+                  <i class="fas fa-eraser"></i> Clear All
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-info"
+                  onclick="loadSamplePortfolio()"
+                >
+                  <i class="fas fa-flask"></i> Load Sample
+                </button>
+              </div>
+              <div class="form-text">
+                Add portfolio components by entering instrument codes and
+                quantities. Use positive numbers for long positions and negative
+                numbers for short positions.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="iv" class="form-label">Implied Volatility</label>
+              <input
+                type="number"
+                class="form-control"
+                id="iv"
+                value="0.2"
+                step="0.01"
+                min="0"
+                max="2"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label for="cost" class="form-label">Cost</label>
+              <input
+                type="number"
+                class="form-control"
+                id="cost"
+                value="0"
+                step="0.01"
+                placeholder="Enter initial cost (can be negative)"
+              />
+              <div class="form-text">
+                Initial cost or premium paid for the portfolio. Use negative
+                values for received premiums.
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" onclick="calculateScenario()">
+                <i class="fas fa-calculator"></i> Calculate Scenario
+              </button>
+              <button
+                class="btn btn-success"
+                onclick="showExportModal()"
+                id="exportBtn"
+                disabled
+              >
+                <i class="fas fa-download"></i> Export Data
+              </button>
+            </div>
+          </div>
+
+          <!-- Save/Load Parameters -->
+          <div class="parameter-section">
+            <h4><i class="fas fa-save"></i> Save/Load Parameters</h4>
+
+            <div class="mb-3">
+              <label for="param_name" class="form-label"
+                >Parameter Set Name</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                id="param_name"
+                placeholder="Enter a name for this parameter set"
+              />
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button class="btn btn-success" onclick="saveParameters()">
+                <i class="fas fa-save"></i> Save Parameters
+              </button>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Saved Parameter Sets</label>
+              <div class="saved-params" id="saved_params">
+                <div class="text-muted">No saved parameters</div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button class="btn btn-info" onclick="loadSavedParameters()">
+                <i class="fas fa-download"></i> Refresh Saved Parameters
+              </button>
+            </div>
+          </div>
+
+          <!-- Data Maintenance Section -->
+          <div class="parameter-section">
+            <h4><i class="fas fa-database"></i> Data Maintenance</h4>
+            <p class="text-muted small">
+              从 OpenCTP API 更新合约到期日和交易参数配置
+            </p>
+            <div class="d-grid gap-2">
+              <button class="btn btn-warning" onclick="updateInstruments()" id="updateInstrumentsBtn">
+                <i class="fas fa-sync-alt"></i> Update Instruments
+              </button>
+            </div>
+            <div id="updateStatus" class="mt-2" style="display: none;">
+              <small class="text-muted">
+                <i class="fas fa-spinner fa-spin"></i> 正在更新合约数据...
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="col-md-8">
+          <div id="loading" class="loading">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Calculating scenario and generating tables...</p>
+          </div>
+
+          <div
+            id="error_message"
+            class="error-message"
+            style="display: none"
+          ></div>
+          <div
+            id="success_message"
+            class="success-message"
+            style="display: none"
+          ></div>
+
+          <div id="results" style="display: none">
+            <h4><i class="fas fa-table"></i> Results</h4>
+            <div id="tables_container"></div>
+
+            <!-- Graph Container -->
+            <div
+              id="graph_container"
+              class="graph-container"
+              style="display: none"
+            >
+              <h5><i class="fas fa-chart-line"></i> Data Visualization</h5>
+              <div id="graph_title" class="mb-3"></div>
+              <div style="position: relative; height: 400px">
+                <canvas id="dataChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div
+      class="modal fade"
+      id="exportModal"
+      tabindex="-1"
+      aria-labelledby="exportModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exportModalLabel">
+              <i class="fas fa-download"></i> Export Data
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="exportName" class="form-label">Export Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="exportName"
+                placeholder="Enter export name (e.g., TA601_Analysis)"
+              />
+              <div class="form-text">
+                This will create files like: TA601_Analysis_portfolio_price.csv,
+                TA601_Analysis_delta.csv, etc.
+              </div>
+            </div>
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i>
+              <strong>Export Format:</strong> All dataframes will be exported as
+              CSV files and compressed into a ZIP archive (RAR if available).
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              onclick="exportData()"
+            >
+              <i class="fas fa-download"></i> Export
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      let savedParameters = {};
+
+      function showMessage(message, isError = false) {
+        const errorDiv = document.getElementById("error_message");
+        const successDiv = document.getElementById("success_message");
+
+        if (isError) {
+          errorDiv.textContent = message;
+          errorDiv.style.display = "block";
+          successDiv.style.display = "none";
+        } else {
+          successDiv.textContent = message;
+          successDiv.style.display = "block";
+          errorDiv.style.display = "none";
+        }
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          errorDiv.style.display = "none";
+          successDiv.style.display = "none";
+        }, 5000);
+      }
+
+      function validatePortfolio(portfolioStr) {
+        try {
+          const portfolio = JSON.parse(portfolioStr);
+          if (typeof portfolio !== "object" || Array.isArray(portfolio)) {
+            throw new Error("Portfolio must be a JSON object");
+          }
+          return true;
+        } catch (e) {
+          showMessage(`Invalid portfolio JSON: ${e.message}`, true);
+          return false;
+        }
+      }
+
+      async function calculateScenario() {
+        const futureId = document.getElementById("future_id").value.trim();
+        const iv = parseFloat(document.getElementById("iv").value);
+        const cost = parseFloat(document.getElementById("cost").value) || 0;
+
+        if (!futureId) {
+          showMessage("Please enter a Future ID", true);
+          return;
+        }
+
+        let portfolio;
+        try {
+          portfolio = getPortfolioFromTable();
+        } catch (error) {
+          showMessage(error.message, true);
+          return;
+        }
+
+        if (isNaN(iv) || iv < 0) {
+          showMessage("Please enter a valid implied volatility (>= 0)", true);
+          return;
+        }
+
+        if (isNaN(cost)) {
+          showMessage("Please enter a valid cost", true);
+          return;
+        }
+
+        // Show loading
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("results").style.display = "none";
+        document.getElementById("error_message").style.display = "none";
+        document.getElementById("success_message").style.display = "none";
+
+        try {
+          const response = await fetch("/calculate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              future_id: futureId,
+              portfolio: portfolio,
+              iv: iv,
+              cost: cost,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayTables(data.tables, data.data_keys);
+            showMessage("Scenario calculated successfully!");
+            // Enable export button
+            document.getElementById("exportBtn").disabled = false;
+          } else {
+            showMessage(data.error || "Calculation failed", true);
+          }
+        } catch (error) {
+          showMessage(`Network error: ${error.message}`, true);
+        } finally {
+          document.getElementById("loading").style.display = "none";
+        }
+      }
+
+      function displayTables(tables, dataKeys) {
+        const container = document.getElementById("tables_container");
+        container.innerHTML = "";
+
+        // Create tab navigation
+        const tabNav = document.createElement("ul");
+        tabNav.className = "nav nav-tabs mb-3";
+        tabNav.id = "tableTabs";
+        tabNav.setAttribute("role", "tablist");
+
+        // Create tab content container
+        const tabContent = document.createElement("div");
+        tabContent.className = "tab-content";
+        tabContent.id = "tableTabContent";
+
+        dataKeys.forEach((key, index) => {
+          const tabId = `tab-${key}`;
+          const isActive = index === 0;
+
+          // Create tab button
+          const tabButton = document.createElement("li");
+          tabButton.className = "nav-item";
+          tabButton.setAttribute("role", "presentation");
+
+          const tabLink = document.createElement("button");
+          tabLink.className = `nav-link ${isActive ? "active" : ""}`;
+          tabLink.id = `${tabId}-tab`;
+          tabLink.setAttribute("data-bs-toggle", "tab");
+          tabLink.setAttribute("data-bs-target", `#${tabId}`);
+          tabLink.setAttribute("type", "button");
+          tabLink.setAttribute("role", "tab");
+          tabLink.setAttribute("aria-controls", tabId);
+          tabLink.setAttribute("aria-selected", isActive);
+          tabLink.textContent = key
+            .replace("_", " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase());
+
+          tabButton.appendChild(tabLink);
+          tabNav.appendChild(tabButton);
+
+          // Create tab panel
+          const tabPanel = document.createElement("div");
+          tabPanel.className = `tab-pane fade ${isActive ? "show active" : ""}`;
+          tabPanel.id = tabId;
+          tabPanel.setAttribute("role", "tabpanel");
+          tabPanel.setAttribute("aria-labelledby", `${tabId}-tab`);
+
+          const tableWrapper = document.createElement("div");
+          tableWrapper.className = "table-responsive";
+
+          // Apply heatmap coloring to the table
+          const coloredTable = applyHeatmapColors(tables[key]);
+          tableWrapper.innerHTML = coloredTable;
+
+          tabPanel.appendChild(tableWrapper);
+          tabContent.appendChild(tabPanel);
+        });
+
+        container.appendChild(tabNav);
+        container.appendChild(tabContent);
+
+        // Add click handlers to all tables after they are inserted into the DOM
+        setTimeout(() => {
+          const allTables = container.querySelectorAll("table");
+          allTables.forEach((table) => {
+            addClickHandlers(table);
+          });
+        }, 100);
+
+        document.getElementById("results").style.display = "block";
+      }
+
+      function applyHeatmapColors(tableHtml) {
+        // Parse the table HTML to extract data and apply colors
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(tableHtml, "text/html");
+        const table = doc.querySelector("table");
+
+        if (!table) return tableHtml;
+
+        // Get all data cells
+        const cells = table.querySelectorAll("td");
+        const values = Array.from(cells)
+          .map((cell) => {
+            const text = cell.textContent.trim();
+            return text === "" ? 0 : parseFloat(text);
+          })
+          .filter((val) => !isNaN(val));
+
+        if (values.length === 0) return tableHtml;
+
+        // Calculate min and max values for color scaling
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const range = maxVal - minVal;
+
+        // Apply colors to cells
+        cells.forEach((cell) => {
+          const value = parseFloat(cell.textContent.trim());
+          if (!isNaN(value)) {
+            const normalizedValue =
+              range === 0 ? 0.5 : (value - minVal) / range;
+            const color = getHeatmapColor(normalizedValue);
+            cell.style.backgroundColor = color;
+            cell.style.color = getTextColor(normalizedValue);
+            cell.style.fontWeight = "bold";
+            cell.style.textAlign = "center";
+            cell.style.padding = "8px";
+          }
+        });
+
+        return doc.documentElement.outerHTML;
+      }
+
+      function getHeatmapColor(normalizedValue) {
+        // Create color gradient from blue (low) to red (high)
+        const red = Math.floor(normalizedValue * 255);
+        const blue = Math.floor((1 - normalizedValue) * 255);
+        return `rgb(${red}, 0, ${blue})`;
+      }
+
+      function getTextColor(normalizedValue) {
+        return "white";
+      }
+
+      async function saveParameters() {
+        const name = document.getElementById("param_name").value.trim();
+        if (!name) {
+          showMessage("Please enter a name for the parameter set", true);
+          return;
+        }
+
+        const futureId = document.getElementById("future_id").value.trim();
+        const iv = parseFloat(document.getElementById("iv").value);
+        const cost = parseFloat(document.getElementById("cost").value) || 0;
+
+        if (!futureId) {
+          showMessage("Please enter Future ID", true);
+          return;
+        }
+
+        let portfolio;
+        try {
+          portfolio = getPortfolioFromTable();
+        } catch (error) {
+          showMessage(error.message, true);
+          return;
+        }
+
+        const parameters = {
+          future_id: futureId,
+          portfolio: portfolio,
+          iv: iv,
+          cost: cost,
+        };
+
+        try {
+          const response = await fetch("/save_parameters", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: name,
+              parameters: parameters,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showMessage(data.message);
+            document.getElementById("param_name").value = "";
+            loadSavedParameters();
+          } else {
+            showMessage(data.error, true);
+          }
+        } catch (error) {
+          showMessage(`Network error: ${error.message}`, true);
+        }
+      }
+
+      async function loadSavedParameters() {
+        try {
+          const response = await fetch("/load_parameters");
+          const data = await response.json();
+
+          if (data.success) {
+            savedParameters = data.parameters;
+            displaySavedParameters();
+          } else {
+            showMessage(data.error, true);
+          }
+        } catch (error) {
+          showMessage(`Network error: ${error.message}`, true);
+        }
+      }
+
+      function displaySavedParameters() {
+        const container = document.getElementById("saved_params");
+        container.innerHTML = "";
+
+        if (Object.keys(savedParameters).length === 0) {
+          container.innerHTML =
+            '<div class="text-muted">No saved parameters</div>';
+          return;
+        }
+
+        Object.keys(savedParameters).forEach((name) => {
+          const paramDiv = document.createElement("div");
+          paramDiv.className =
+            "param-item d-flex justify-content-between align-items-center";
+
+          const nameSpan = document.createElement("span");
+          nameSpan.textContent = name;
+          nameSpan.style.cursor = "pointer";
+          nameSpan.style.flex = "1";
+          nameSpan.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            loadParameterSet(name);
+          });
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn btn-sm btn-outline-danger";
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+          deleteBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            deleteParameterSet(name);
+          });
+
+          paramDiv.appendChild(nameSpan);
+          paramDiv.appendChild(deleteBtn);
+          container.appendChild(paramDiv);
+        });
+      }
+
+      function loadParameterSet(name) {
+        console.log("Loading parameter set:", name);
+        console.log("Available parameters:", savedParameters);
+
+        const params = savedParameters[name];
+        if (params) {
+          console.log("Found parameters:", params);
+
+          // Update form fields
+          const futureIdField = document.getElementById("future_id");
+          const ivField = document.getElementById("iv");
+          const costField = document.getElementById("cost");
+
+          if (futureIdField) futureIdField.value = params.future_id || "";
+          if (ivField) ivField.value = params.iv || 0.2;
+          if (costField) costField.value = params.cost || 0;
+
+          // Update portfolio table
+          if (params.portfolio) {
+            setPortfolioToTable(params.portfolio);
+          }
+
+          showMessage(`Loaded parameter set: ${name}`);
+        } else {
+          console.error("Parameters not found for:", name);
+          showMessage(`Parameter set "${name}" not found`, true);
+        }
+      }
+
+      async function deleteParameterSet(name) {
+        if (
+          !confirm(`Are you sure you want to delete parameter set "${name}"?`)
+        ) {
+          return;
+        }
+
+        try {
+          const response = await fetch("/delete_parameters", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: name,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showMessage(data.message);
+            loadSavedParameters();
+          } else {
+            showMessage(data.error, true);
+          }
+        } catch (error) {
+          showMessage(`Network error: ${error.message}`, true);
+        }
+      }
+
+      // Export functionality
+      function showExportModal() {
+        const modal = new bootstrap.Modal(
+          document.getElementById("exportModal")
+        );
+        modal.show();
+      }
+
+      async function exportData() {
+        const exportName = document.getElementById("exportName").value.trim();
+
+        if (!exportName) {
+          showMessage("Please enter an export name", true);
+          return;
+        }
+
+        const futureId = document.getElementById("future_id").value.trim();
+        const iv = document.getElementById("iv").value;
+        const cost = document.getElementById("cost").value;
+
+        if (!futureId) {
+          showMessage("Please enter Future ID", true);
+          return;
+        }
+
+        let portfolio;
+        try {
+          portfolio = getPortfolioFromTable();
+        } catch (error) {
+          showMessage(error.message, true);
+          return;
+        }
+
+        try {
+          showMessage("Exporting data... Please wait.");
+
+          const response = await fetch("/export", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              future_id: futureId,
+              portfolio: portfolio,
+              iv: iv,
+              cost: cost,
+              export_name: exportName,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showMessage(data.message);
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("exportModal")
+            );
+            modal.hide();
+
+            // Clear export name
+            document.getElementById("exportName").value = "";
+
+            // Create download link
+            if (data.download_url) {
+              const downloadLink = document.createElement("a");
+              downloadLink.href = data.download_url;
+              downloadLink.download = "";
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            }
+          } else {
+            showMessage(data.error || "Export failed", true);
+          }
+        } catch (error) {
+          showMessage(`Export error: ${error.message}`, true);
+        }
+      }
+
+      // Portfolio table management functions
+      function addPortfolioRow() {
+        const tbody = document.getElementById("portfolioTableBody");
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+          <td>
+            <input type="text" class="form-control form-control-sm" placeholder="e.g., TA601C1600" />
+          </td>
+          <td>
+            <input type="number" class="form-control form-control-sm" placeholder="e.g., 1" step="0.01" />
+          </td>
+          <td>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(newRow);
+      }
+
+      function removePortfolioRow(button) {
+        const row = button.closest("tr");
+        const tbody = document.getElementById("portfolioTableBody");
+        if (tbody.children.length > 1) {
+          row.remove();
+        } else {
+          showMessage("Portfolio must have at least one component", true);
+        }
+      }
+
+      function clearPortfolioTable() {
+        const tbody = document.getElementById("portfolioTableBody");
+        tbody.innerHTML = `
+          <tr>
+            <td>
+              <input type="text" class="form-control form-control-sm" placeholder="e.g., TA601C1600" />
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm" placeholder="e.g., 1" step="0.01" />
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+
+      function loadSamplePortfolio() {
+        const tbody = document.getElementById("portfolioTableBody");
+        tbody.innerHTML = `
+          <tr>
+            <td>
+              <input type="text" class="form-control form-control-sm" value="TA601C1600" />
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm" value="1" step="0.01" />
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <input type="text" class="form-control form-control-sm" value="TA601P1800" />
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm" value="-1" step="0.01" />
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+
+      function getPortfolioFromTable() {
+        const tbody = document.getElementById("portfolioTableBody");
+        const portfolio = {};
+        let hasValidEntries = false;
+
+        for (let row of tbody.children) {
+          const inputs = row.querySelectorAll("input");
+          const instrumentCode = inputs[0].value.trim();
+          const quantity = parseFloat(inputs[1].value);
+
+          if (instrumentCode && !isNaN(quantity)) {
+            portfolio[instrumentCode] = quantity;
+            hasValidEntries = true;
+          }
+        }
+
+        if (!hasValidEntries) {
+          throw new Error(
+            "Please enter at least one valid portfolio component"
+          );
+        }
+
+        return portfolio;
+      }
+
+      function setPortfolioToTable(portfolio) {
+        const tbody = document.getElementById("portfolioTableBody");
+        tbody.innerHTML = "";
+
+        for (const [instrumentCode, quantity] of Object.entries(portfolio)) {
+          const newRow = document.createElement("tr");
+          newRow.innerHTML = `
+            <td>
+              <input type="text" class="form-control form-control-sm" value="${instrumentCode}" />
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm" value="${quantity}" step="0.01" />
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(newRow);
+        }
+      }
+
+      // Chart-related variables
+      let currentChart = null;
+
+      function addClickHandlers(table) {
+        // Add click handlers to column headers (dates)
+        const headers = table.querySelectorAll("th");
+        headers.forEach((header, index) => {
+          if (index > 0) {
+            // Skip the first header (index column)
+            header.classList.add("clickable-header");
+            header.addEventListener("click", () => {
+              showColumnChart(table, index);
+            });
+          }
+        });
+
+        // Add click handlers to row indices (underlying prices)
+        const rows = table.querySelectorAll("tbody tr");
+        rows.forEach((row, rowIndex) => {
+          const firstCell = row.querySelector("th, td");
+          if (firstCell) {
+            firstCell.classList.add("clickable-index");
+            firstCell.addEventListener("click", () => {
+              showRowChart(table, rowIndex);
+            });
+          }
+        });
+      }
+
+      function showColumnChart(table, columnIndex) {
+        const header = table.querySelectorAll("th")[columnIndex];
+        const columnName = header.textContent.trim();
+
+        // Extract data from the column
+        const rows = table.querySelectorAll("tbody tr");
+        const labels = [];
+        const data = [];
+
+        rows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          const indexCell = row.querySelector("th, td");
+          const valueCell = cells[columnIndex - 1]; // -1 because first column is index
+
+          if (indexCell && valueCell) {
+            const label = indexCell.textContent.trim();
+            const value = parseFloat(valueCell.textContent.trim());
+
+            if (!isNaN(value)) {
+              labels.push(label);
+              data.push(value);
+            }
+          }
+        });
+
+        if (data.length > 0) {
+          createChart(
+            labels,
+            data,
+            `Values for Date: ${columnName}`,
+            "Underlying Price"
+          );
+        }
+      }
+
+      function showRowChart(table, rowIndex) {
+        const row = table.querySelectorAll("tbody tr")[rowIndex];
+        const firstCell = row.querySelector("th, td");
+        const rowName = firstCell.textContent.trim();
+
+        // Extract data from the row
+        const headers = table.querySelectorAll("th");
+        const cells = row.querySelectorAll("td");
+        const labels = [];
+        const data = [];
+
+        cells.forEach((cell, cellIndex) => {
+          const headerIndex = cellIndex + 1; // +1 because first column is index
+          const header = headers[headerIndex];
+
+          if (header) {
+            const label = header.textContent.trim();
+            const value = parseFloat(cell.textContent.trim());
+
+            if (!isNaN(value)) {
+              labels.push(label);
+              data.push(value);
+            }
+          }
+        });
+
+        if (data.length > 0) {
+          createChart(
+            labels,
+            data,
+            `Values for Underlying Price: ${rowName}`,
+            "Date"
+          );
+        }
+      }
+
+      function createChart(labels, data, title, xAxisLabel) {
+        // Destroy existing chart if it exists
+        if (currentChart) {
+          currentChart.destroy();
+        }
+
+        // Show graph container
+        const graphContainer = document.getElementById("graph_container");
+        const graphTitle = document.getElementById("graph_title");
+
+        graphContainer.style.display = "block";
+        graphTitle.textContent = title;
+
+        // Create new chart
+        const ctx = document.getElementById("dataChart").getContext("2d");
+        currentChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Value",
+                data: data,
+                borderColor: "rgb(75, 192, 192)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                tension: 0.1,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: title,
+              },
+              legend: {
+                display: false,
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: xAxisLabel,
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Value",
+                },
+              },
+            },
+          },
+        });
+
+        // Scroll to graph container
+        graphContainer.scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Update instruments from OpenCTP API
+      async function updateInstruments() {
+        const btn = document.getElementById("updateInstrumentsBtn");
+        const status = document.getElementById("updateStatus");
+        
+        // Disable button and show loading
+        btn.disabled = true;
+        status.style.display = "block";
+        
+        try {
+          const response = await fetch("/update_instruments", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            const details = data.details;
+            showMessage(
+              `合约数据更新成功！\n` +
+              `期权合约: ${details.option_instruments} 条\n` +
+              `期货合约: ${details.futures_instruments} 条\n` +
+              `到期日配置: ${details.expire_date_count} 条\n` +
+              `交易参数: ${details.trade_para_count} 条`
+            );
+          } else {
+            showMessage(data.error || "更新失败", true);
+          }
+        } catch (error) {
+          showMessage(`网络错误: ${error.message}`, true);
+        } finally {
+          btn.disabled = false;
+          status.style.display = "none";
+        }
+      }
+
+      // Load saved parameters on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        loadSavedParameters();
+      });
+    </script>
+  </body>
+</html>
