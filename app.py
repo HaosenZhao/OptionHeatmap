@@ -72,9 +72,9 @@ def calculate():
     try:
         data = request.get_json()
 
-        future_id = data.get("future_id", "TA601")
-        portfolio = data.get("portfolio", {"TA601C1600": 1, "TA601P1800": -1})
-        iv = float(data.get("iv", 0.2))
+        future_id = data.get("future_id", "FG605")
+        portfolio = data.get("portfolio", {"FG605C1120": 1, "FG605C1200": -2})
+        iv = float(data.get("iv", 0.4))
         cost = float(data.get("cost", 0))
 
         # Validate portfolio format
