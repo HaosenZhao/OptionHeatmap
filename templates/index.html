@@ -162,6 +162,7 @@
                     <tr>
                       <th>Instrument Code</th>
                       <th>Quantity</th>
+                      <th>IV <small class="text-muted fw-normal">（留空用全局）</small></th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -180,6 +181,16 @@
                           class="form-control form-control-sm"
                           placeholder="e.g., 1"
                           step="0.01"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          class="form-control form-control-sm iv-input"
+                          placeholder="global"
+                          step="0.01"
+                          min="0"
+                          max="2"
                         />
                       </td>
                       <td>
@@ -474,9 +485,9 @@
           return;
         }
 
-        let portfolio;
+        let portfolio, iv_map;
         try {
-          portfolio = getPortfolioFromTable();
+          ({ portfolio, iv_map } = getPortfolioFromTable());
         } catch (error) {
           showMessage(error.message, true);
           return;
@@ -508,6 +519,7 @@
               future_id: futureId,
               portfolio: portfolio,
               iv: iv,
+              iv_map: iv_map,
               cost: cost,
             }),
           });
@@ -670,9 +682,9 @@
           return;
         }
 
-        let portfolio;
+        let portfolio, iv_map;
         try {
-          portfolio = getPortfolioFromTable();
+          ({ portfolio, iv_map } = getPortfolioFromTable());
         } catch (error) {
           showMessage(error.message, true);
           return;
@@ -682,6 +694,7 @@
           future_id: futureId,
           portfolio: portfolio,
           iv: iv,
+          iv_map: iv_map,
           cost: cost,
         };
 
@@ -786,7 +799,7 @@
 
           // Update portfolio table
           if (params.portfolio) {
-            setPortfolioToTable(params.portfolio);
+            setPortfolioToTable(params.portfolio, params.iv_map || {});
           }
 
           showMessage(`Loaded parameter set: ${name}`);
@@ -852,9 +865,9 @@
           return;
         }
 
-        let portfolio;
+        let portfolio, iv_map;
         try {
-          portfolio = getPortfolioFromTable();
+          ({ portfolio, iv_map } = getPortfolioFromTable());
         } catch (error) {
           showMessage(error.message, true);
           return;
@@ -872,6 +885,7 @@
               future_id: futureId,
               portfolio: portfolio,
               iv: iv,
+              iv_map: iv_map,
               cost: cost,
               export_name: exportName,
             }),
@@ -920,6 +934,9 @@
             <input type="number" class="form-control form-control-sm" placeholder="e.g., 1" step="0.01" />
           </td>
           <td>
+            <input type="number" class="form-control form-control-sm iv-input" placeholder="global" step="0.01" min="0" max="2" />
+          </td>
+          <td>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
               <i class="fas fa-trash"></i>
             </button>
@@ -949,6 +966,9 @@
               <input type="number" class="form-control form-control-sm" placeholder="e.g., 1" step="0.01" />
             </td>
             <td>
+              <input type="number" class="form-control form-control-sm iv-input" placeholder="global" step="0.01" min="0" max="2" />
+            </td>
+            <td>
               <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
                 <i class="fas fa-trash"></i>
               </button>
@@ -968,6 +988,9 @@
               <input type="number" class="form-control form-control-sm" value="1" step="0.01" />
             </td>
             <td>
+              <input type="number" class="form-control form-control-sm iv-input" placeholder="global" step="0.01" min="0" max="2" />
+            </td>
+            <td>
               <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
                 <i class="fas fa-trash"></i>
               </button>
@@ -981,6 +1004,9 @@
               <input type="number" class="form-control form-control-sm" value="-1" step="0.01" />
             </td>
             <td>
+              <input type="number" class="form-control form-control-sm iv-input" placeholder="global" step="0.01" min="0" max="2" />
+            </td>
+            <td>
               <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">
                 <i class="fas fa-trash"></i>
               </button>
@@ -992,15 +1018,20 @@
       function getPortfolioFromTable() {
         const tbody = document.getElementById("portfolioTableBody");
         const portfolio = {};
+        const iv_map = {};
         let hasValidEntries = false;
 
         for (let row of tbody.children) {
           const inputs = row.querySelectorAll("input");
           const instrumentCode = inputs[0].value.trim();
           const quantity = parseFloat(inputs[1].value);
+          const ivVal = parseFloat(inputs[2].value);
 
           if (instrumentCode && !isNaN(quantity)) {
             portfolio[instrumentCode] = quantity;
+            if (!isNaN(ivVal)) {
+              iv_map[instrumentCode] = ivVal;
+            }
             hasValidEntries = true;
           }
         }
@@ -1011,14 +1042,15 @@
           );
         }
 
-        return portfolio;
+        return { portfolio, iv_map };
       }
 
-      function setPortfolioToTable(portfolio) {
+      function setPortfolioToTable(portfolio, iv_map = {}) {
         const tbody = document.getElementById("portfolioTableBody");
         tbody.innerHTML = "";
 
         for (const [instrumentCode, quantity] of Object.entries(portfolio)) {
+          const ivOverride = iv_map[instrumentCode];
           const newRow = document.createElement("tr");
           newRow.innerHTML = `
             <td>
@@ -1026,6 +1058,11 @@
             </td>
             <td>
               <input type="number" class="form-control form-control-sm" value="${quantity}" step="0.01" />
+            </td>
+            <td>
+              <input type="number" class="form-control form-control-sm iv-input"
+                value="${ivOverride !== undefined ? ivOverride : ''}"
+                placeholder="global" step="0.01" min="0" max="2" />
             </td>
             <td>
               <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePortfolioRow(this)">

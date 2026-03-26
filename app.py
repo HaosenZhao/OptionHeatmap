@@ -43,10 +43,9 @@ def save_parameters(parameters):
         json.dump(parameters, f, ensure_ascii=False, indent=2)
 
 
-def format_dataframe_for_table(df):
+def format_dataframe_for_table(df, decimals=2):
     """Format dataframe for HTML table display"""
-    # Round to 2 decimal places
-    df_formatted = df.round(2)
+    df_formatted = df.round(decimals)
 
     # Convert to HTML table with styling
     html_table = df_formatted.to_html(
@@ -75,6 +74,7 @@ def calculate():
         future_id = data.get("future_id", "FG605")
         portfolio = data.get("portfolio", {"FG605C1120": 1, "FG605C1200": -2})
         iv = float(data.get("iv", 0.4))
+        iv_map = {k: float(v) for k, v in data.get("iv_map", {}).items()}
         cost = float(data.get("cost", 0))
 
         # Validate portfolio format
@@ -90,12 +90,12 @@ def calculate():
                 )
 
         # Calculate scenario
-        result = findPairScenrio(future_id, portfolio, iv, cost)
+        result = findPairScenrio(future_id, portfolio, iv, cost, iv_map=iv_map)
 
         # Format dataframes for table display
         tables = {}
         for key, df in result.items():
-            tables[key] = format_dataframe_for_table(df)
+            tables[key] = format_dataframe_for_table(df, decimals=4 if key == "gamma" else 2)
 
         return jsonify(
             {"success": True, "tables": tables, "data_keys": list(result.keys())}
@@ -171,6 +171,7 @@ def export_data():
         data = request.get_json()
         future_id = data.get("future_id", "").strip()
         iv = float(data.get("iv", 0.2))
+        iv_map = {k: float(v) for k, v in data.get("iv_map", {}).items()}
         cost = float(data.get("cost", 0))
         export_name = data.get("export_name", "").strip()
 
@@ -186,7 +187,7 @@ def export_data():
             return jsonify({"success": False, "error": "Invalid portfolio format"})
 
         # Calculate scenario
-        result = findPairScenrio(future_id, portfolio, iv, cost)
+        result = findPairScenrio(future_id, portfolio, iv, cost, iv_map=iv_map)
 
         # Create temporary directory for CSV files
         temp_dir = tempfile.mkdtemp()

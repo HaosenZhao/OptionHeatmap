@@ -74,7 +74,7 @@ def split_instrument(instrument):
     }
 
 
-def findPortfolioDetails(future_id, portfolio, s, ttm, iv, cost=0):
+def findPortfolioDetails(future_id, portfolio, s, ttm, iv, cost=0, iv_map=None):
     t = ttm / 365
     info = findInsInfo(future_id)
     multiple = info["volume_multiple"]
@@ -97,15 +97,16 @@ def findPortfolioDetails(future_id, portfolio, s, ttm, iv, cost=0):
                 f"Option '{opt_code}' has different underlying_id '{thisfuture_id}' from future_id '{future_id}'."
             )
         num_hold = portfolio[opt_code]
-        # print(typ, s, k, t, 0, iv, 0)
+        opt_iv = iv_map.get(opt_code, iv) if iv_map else iv
+        # print(typ, s, k, t, 0, opt_iv, 0)
         optprice = (
-            BSMiv.black_scholes_merton(typ, s, k, t, 0, iv, 0) * multiple * num_hold
+            BSMiv.black_scholes_merton(typ, s, k, t, 0, opt_iv, 0) * multiple * num_hold
         )
         portfolio_price += optprice
-        delta += BSMgreeks.delta(typ, s, k, t, 0, iv, 0) * multiple * num_hold
-        gamma += BSMgreeks.gamma(typ, s, k, t, 0, iv, 0) * multiple * num_hold
-        vega += BSMgreeks.vega(typ, s, k, t, 0, iv, 0) * multiple * num_hold
-        theta += BSMgreeks.theta(typ, s, k, t, 0, iv, 0) * multiple * num_hold
+        delta += BSMgreeks.delta(typ, s, k, t, 0, opt_iv, 0) * multiple * num_hold
+        gamma += BSMgreeks.gamma(typ, s, k, t, 0, opt_iv, 0) * multiple * num_hold
+        vega += BSMgreeks.vega(typ, s, k, t, 0, opt_iv, 0) * multiple * num_hold
+        theta += BSMgreeks.theta(typ, s, k, t, 0, opt_iv, 0) * multiple * num_hold
         if num_hold < 0:
             margin -= s * num_hold * margin_ratio * multiple / 2 + optprice
         portfolio_price_afterfee += optprice - commission * abs(num_hold)
@@ -124,7 +125,7 @@ def findPortfolioDetails(future_id, portfolio, s, ttm, iv, cost=0):
     ]
 
 
-def findPairScenrio(future_id, portfolio, iv, cost=0):
+def findPairScenrio(future_id, portfolio, iv, cost=0, iv_map=None):
     optinfo = findInsInfo(future_id)
     today = dt.date.today().strftime(format="%Y%m%d")
     # Filter trading days: >= today and <= expiredate
@@ -178,7 +179,7 @@ def findPairScenrio(future_id, portfolio, iv, cost=0):
                 portfolio_price_afterfee,
                 pnl,
                 pnl_afterfee,
-            ) = findPortfolioDetails(future_id, portfolio, s, ttm, iv, cost)
+            ) = findPortfolioDetails(future_id, portfolio, s, ttm, iv, cost, iv_map=iv_map)
             dataframe_dict["portfolio_price"].loc[s, date] = portfolio_price
             dataframe_dict["delta"].loc[s, date] = delta
             dataframe_dict["gamma"].loc[s, date] = gamma
@@ -193,7 +194,8 @@ def findPairScenrio(future_id, portfolio, iv, cost=0):
 
     dataframe_dict["LotsDelta"] = dataframe_dict["delta"] / multi
     for key in dataframe_dict:
-        dataframe_dict[key] = np.round(dataframe_dict[key], 2)
+        decimals = 4 if key == "gamma" else 2
+        dataframe_dict[key] = np.round(dataframe_dict[key], decimals)
     s = index[0]
     # date = columns[0]
     # ttm = (
