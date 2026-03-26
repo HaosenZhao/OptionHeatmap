@@ -26,5 +26,6 @@ Thumbs.db
 *.log
 
 # Runtime data files (production)
+expire_date.json
 portfolio_parameters.json
 trade_para.json
